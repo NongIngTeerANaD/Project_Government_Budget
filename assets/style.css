@@ -14,3 +14,10 @@ body { background: #f4f6fa; font-family: "Sarabun", "Noto Sans Thai", "Segoe UI"
 .caption { color: #4a5568; font-size: .88rem; }
 .hint { color: #7b8794; font-size: .78rem; text-align: center; }
 .nav-tabs .nav-link { font-weight: 600; }
+.data-ref { font-size: .72rem; color: #6b7785; border-top: 1px dashed #d5dbe3; margin-top: 6px; padding-top: 5px; line-height: 1.6; }
+.data-ref .ref-title { font-weight: 700; color: #4a5568; }
+.data-ref .ref-item { margin-right: 12px; display: inline-block; }
+.data-ref a { color: #457b9d; }
+.ref-badge { padding: 0 6px; border-radius: 8px; font-size: .68rem; font-weight: 600; }
+.ref-badge.real { background: #d8f3e3; color: #14683a; }
+.ref-badge.synthetic { background: #fff3cd; color: #8a5a00; }

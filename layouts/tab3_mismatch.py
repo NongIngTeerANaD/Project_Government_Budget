@@ -2,6 +2,7 @@ import dash_bootstrap_components as dbc
 from dash import dash_table, dcc, html
 
 from layouts.tab1_national import graph
+from utils.sources import reference
 
 
 def build() -> html.Div:
@@ -12,14 +13,16 @@ def build() -> html.Div:
                  className="caption mb-3"),
         dbc.Row([
             dbc.Col(dbc.Card(dbc.CardBody([html.Div(["สีตาม:", color_by], className="mb-1"),
-                                           dcc.Graph(id="g3-scatter", config={"displayModeBar": False})]), className="chart-card shadow-sm"), lg=6),
-            dbc.Col(graph("g3-bubble"), lg=6),
+                                           dcc.Graph(id="g3-scatter", config={"displayModeBar": False}),
+                                           reference("budget_prov", "population", "outcome_prov")]), className="chart-card shadow-sm"), lg=6),
+            dbc.Col(graph("g3-bubble", "budget_prov", "complaints_prov", "population"), lg=6),
         ], className="g-3 mb-3"),
-        dbc.Row([dbc.Col(graph("g3-gpp"), lg=6), dbc.Col(graph("g3-corr"), lg=6)], className="g-3 mb-3"),
+        dbc.Row([dbc.Col(graph("g3-gpp", "gpp", "budget_prov"), lg=6), dbc.Col(graph("g3-corr", "budget_prov", "gpp", "complaints_prov", "outcome_prov", "population"), lg=6)], className="g-3 mb-3"),
         dbc.Row([
             dbc.Col(dbc.Card(dbc.CardBody([
                 html.H6("Heatmap: คะแนน Mismatch จังหวัด × ด้าน (เรียงจากรวมสูงสุดด้านบน)", className="mb-2"),
                 html.Div(dcc.Graph(id="g3-heatmap", config={"displayModeBar": False}), style={"maxHeight": "720px", "overflowY": "auto"}),
+                reference("budget_prov", "population", "outcome_prov", "complaints_prov", "gpp"),
             ]), className="chart-card shadow-sm"), lg=7),
             dbc.Col(dbc.Card(dbc.CardBody([
                 html.H6("Top 10 Mismatch Priority List", className="mb-2"),
@@ -30,6 +33,7 @@ def build() -> html.Div:
                                 "whiteSpace": "normal", "height": "auto"},
                     style_cell_conditional=[{"if": {"column_id": "Mismatch"}, "fontWeight": "700", "textAlign": "right"}],
                 ),
+                reference("budget_prov", "population", "outcome_prov", "complaints_prov", "gpp"),
             ]), className="chart-card shadow-sm"), lg=5),
         ], className="g-3"),
     ])
