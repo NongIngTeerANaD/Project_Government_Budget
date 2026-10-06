@@ -14,7 +14,9 @@ KEYS = ["Fiscal_Year", "Province_ID", "Domain_ID"]
 
 
 def _read(name: str) -> pd.DataFrame:
-    path = C.RAW_DIR / name
+    path = C.REAL_DIR / name  # real data wins over the synthetic sample
+    if not path.exists():
+        path = C.RAW_DIR / name
     if not path.exists():
         raise FileNotFoundError(f"{path} missing - run `python -m utils.sample_data` or add real data (docs/DATA_SCHEMA.md)")
     return pd.read_csv(path)
@@ -69,7 +71,10 @@ def build(verbose: bool = True) -> dict:
     nat_c = C.RAW_DIR / "complaints_national.csv"
     national_complaints = pd.read_csv(nat_c) if nat_c.exists() else \
         fact.groupby(["Fiscal_Year", "Domain_ID"], as_index=False)["Complaint_Count"].sum()
-    gdp = _read("gdp_national.csv")
+    if (C.REAL_DIR / "gdp_national.csv").exists() or not (C.REAL_DIR / "gpp_province.csv").exists():
+        gdp = _read("gdp_national.csv")
+    else:  # real GPP available -> national GDP ~= sum of 77 provincial GPP (documented in raw_real/SOURCES.md)
+        gdp = py.groupby("Fiscal_Year", as_index=False).GPP_Amount.sum().rename(columns={"GPP_Amount": "GDP_Amount"})
 
     # national outcome = population-weighted mean of provincial normalised scores
     w = fact.merge(py[["Fiscal_Year", "Province_ID", "Population"]], on=["Fiscal_Year", "Province_ID"])

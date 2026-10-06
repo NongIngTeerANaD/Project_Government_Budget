@@ -43,6 +43,12 @@ def generate(raw_dir=C.RAW_DIR, seed: int = SEED, missing_rate: float = 0.015) -
         100_000 * REGION_GPP_MULT[r] * (KNOWN[p][1] if p in KNOWN else rng.lognormal(0, 0.35))
         for p, r in zip(prov.Province_ID, prov.Region)
     ])
+    real_pop, real_gpp = C.REAL_DIR / "population_province.csv", C.REAL_DIR / "gpp_province.csv"
+    if real_pop.exists() and real_gpp.exists():  # keep synthetic parts consistent with the real GPP / population
+        rp = pd.read_csv(real_pop).query("Fiscal_Year == @years[0]").set_index("Province_ID").Population
+        rg = pd.read_csv(real_gpp).query("Fiscal_Year == @years[0]").set_index("Province_ID").GPP_Amount
+        pop0 = rp.reindex(prov.Province_ID).to_numpy(float)
+        gpp_pc0 = (rg / rp).reindex(prov.Province_ID).to_numpy(float)
     z_gpp = (np.log(gpp_pc0) - np.log(gpp_pc0).mean()) / np.log(gpp_pc0).std()
     quality = 0.45 * z_gpp + rng.normal(0, 0.9, n)  # latent "service quality" per province
     alloc_noise = rng.lognormal(0, 0.35, (n, len(C.DOMAIN_IDS)))

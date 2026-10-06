@@ -19,8 +19,12 @@ TABS = {"tab-1": tab1_national.build, "tab-2": tab2_provincial.build, "tab-3": t
 
 
 def serve_layout():
-    banner = html.Div("⚠ ข้อมูลตัวอย่างสังเคราะห์ (Synthetic sample) — ตัวเลขทั้งหมดไม่ใช่ข้อมูลจริง ใช้สำหรับพัฒนา/ทดสอบระบบเท่านั้น",
-                      className="sample-banner") if C.is_sample_data() else None
+    from utils.sources import SOURCES, real_keys
+    real = real_keys()
+    synth = [SOURCES[k][0] for k in SOURCES if k not in real and k != "boundaries"]
+    banner = html.Div([html.B("สถานะข้อมูล: "), f"ข้อมูลจริง {len([k for k in real])} ชุด (GPP, ประชากร, GDP จาก สศช.); " if real else "",
+                       "ชุดที่ยังเป็นข้อมูลสังเคราะห์ (ไม่ใช่ตัวเลขจริง): " + ", ".join(synth) + " — ดูป้ายใต้แต่ละกราฟ"],
+                      className="sample-banner") if (C.is_sample_data() or synth) else None
     return html.Div([
         html.Div([html.H1("แดชบอร์ดวิเคราะห์งบประมาณ GDP ผลลัพธ์ และข้อร้องเรียน — ประเทศไทย"),
                   html.Div("Thailand Budget, GDP, Outcome & Complaint Analytics · FY 2019–2023 · 77 provinces", className="sub")],

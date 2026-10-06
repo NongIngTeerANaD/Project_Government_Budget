@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"
+REAL_DIR = DATA_DIR / "raw_real"  # real open-data extracts; take precedence over synthetic data/raw
 PROCESSED_DIR = DATA_DIR / "processed"
 
 FISCAL_YEARS = [2019, 2020, 2021, 2022, 2023]  # CE (BE 2562-2566)
