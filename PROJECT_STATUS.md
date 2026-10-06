@@ -9,7 +9,7 @@
 | 0 | README จากเอกสารสเปค 3 ไฟล์ + commit | ✅ เสร็จ |
 | 1 | Scaffold โครงสร้างโปรเจกต์ (`config.py`, `layouts/`, `callbacks/`, `utils/`, `data/`, `requirements.txt`) | ✅ เสร็จ |
 | 2 | Data layer: `dim_province.csv` (77 จังหวัด), sample generator, pipeline (interpolate/normalize), loader | ✅ เสร็จ |
-| 3 | Mismatch engine (`utils/mismatch.py`) + unit tests | ⬜ ยังไม่เริ่ม |
+| 3 | Mismatch engine (`utils/mismatch.py`) + unit tests | ✅ เสร็จ (8 tests ผ่าน) |
 | 4 | App shell + Global filters (ปี / ด้าน / จังหวัด) | ⬜ ยังไม่เริ่ม |
 | 5 | Tab 1: National Overview | ⬜ ยังไม่เริ่ม |
 | 6 | Tab 2: Provincial Overview + cross-filtering | ⬜ ยังไม่เริ่ม |
@@ -23,9 +23,11 @@
 
 - **2026-10-06** — Phase 1: scaffold + `config.py` (6 domains, สี, น้ำหนัก Mismatch) + `requirements.txt` (`d645d83`)
 - **2026-10-06** — Phase 2: `utils/sample_data.py` (CSV สังเคราะห์ใน `data/raw/`), `utils/pipeline.py` (grid ครบ, linear interpolation + ธง `Is_Imputed` 108/2,310 แถว, Min-Max outcome ต่อด้าน, ตารางประเทศ), `utils/data_loader.py` (per-capita, complaint rate /100k, efficiency ratio), `docs/DATA_SCHEMA.md`
+- **2026-10-06** — Phase 3: `utils/mismatch.py` (normalize ต่อ ปี×ด้าน, สูตร BRD 4.2, Top-N พร้อมเหตุผลภาษาไทย) + `tests/` — pytest 8 passed
 
 ## หมายเหตุ / ข้อสมมติ
 
 - แหล่ง Open Data ภาครัฐ (GovSpend, สศช., 1111, ฯลฯ) ต้องดาวน์โหลดด้วยตนเองและรูปแบบไฟล์ต่างกัน จึงพัฒนาด้วย **ข้อมูลตัวอย่างสังเคราะห์ (synthetic)** ที่มี schema ตรงกับ Fact table ใน BRD ก่อน และทำ loader ให้สลับเป็นข้อมูลจริงได้ (Phase 9) — ตัวเลขในแดชบอร์ดช่วงนี้ **ไม่ใช่ข้อมูลจริง**
 - แยก `fact_province_year` (GPP, Population) ออกจาก `fact_province_domain` เพราะเป็นระดับจังหวัด×ปี ถ้าไว้ใน fact เดียวตาม BRD จะ SUM ซ้ำ 6 เท่า
+- สูตร Mismatch: พจน์ B×C ถ้าทั้งคู่อยู่ในสเกล 0–100 จะได้ 0–10,000 จึงหารด้วย 100 เพื่อให้คะแนนรวมอยู่ในช่วง 0–100 (ข้อสมมติ ควรยืนยันกับเจ้าของ BRD)
 - เมื่อสเปคสองฉบับต่างกัน ยึด BRD เป็นหลัก (3 tab ตาม Section 5) และเพิ่ม view จาก handoff spec (Top/Bottom 10, correlation heatmap) เป็นส่วนเสริม

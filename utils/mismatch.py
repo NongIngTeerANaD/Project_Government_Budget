@@ -1,0 +1,50 @@
+"""Mismatch Score engine (BRD section 4.2).
+
+Per (year, domain) every input is Min-Max normalised to 0-100 across provinces:
+    B = budget per capita, O = outcome raw value, C = complaint rate per 100k,
+    G = GPP per capita.
+    Mismatch = w1*max(0, B-O) + w2*(B*C)/100 + w3*max(0, B-G)
+
+ASSUMPTION: the BRD writes the interaction as (B x C). With both on 0-100 that
+term spans 0-10,000, dwarfing the others, so it is divided by 100 to keep it on
+the same 0-100 scale; the final score is then bounded to 0-100.
+"""
+import numpy as np
+import pandas as pd
+
+import config as C
+from utils.pipeline import minmax
+
+REASON_TH = {
+    "gap_outcome": "งบต่อหัวสูงแต่ผลลัพธ์ต่ำ",
+    "gap_complaint": "งบต่อหัวสูงและมีข้อร้องเรียนสูง",
+    "gap_gpp": "งบต่อหัวสูงเกินขนาดเศรษฐกิจ (GPP ต่อหัว)",
+}
+
+
+def compute_mismatch(df: pd.DataFrame, weights: dict | None = None) -> pd.DataFrame:
+    """Add B/O/C/G, component terms and Mismatch_Score.
+
+    `df` needs: Fiscal_Year, Domain_ID, Budget_per_capita, Outcome_Raw_Value,
+    Complaint_rate, GPP_per_capita (one row per province x domain x year).
+    """
+    w = {**C.MISMATCH_WEIGHTS, **(weights or {})}
+    out = df.copy()
+    grp = out.groupby(["Fiscal_Year", "Domain_ID"])
+    out["B"] = grp["Budget_per_capita"].transform(minmax)
+    out["O"] = grp["Outcome_Raw_Value"].transform(minmax)
+    out["C"] = grp["Complaint_rate"].transform(minmax)
+    out["G"] = out.groupby("Fiscal_Year")["GPP_per_capita"].transform(minmax)  # GPP is domain-independent
+    out["gap_outcome"] = w["w1"] * np.maximum(0, out.B - out.O)
+    out["gap_complaint"] = w["w2"] * (out.B * out.C) / 100
+    out["gap_gpp"] = w["w3"] * np.maximum(0, out.B - out.G)
+    out["Mismatch_Score"] = out[["gap_outcome", "gap_complaint", "gap_gpp"]].sum(axis=1)
+    return out
+
+
+def top_mismatch(scored: pd.DataFrame, n: int = 10) -> pd.DataFrame:
+    """Top-n province x domain pairs with the dominant reason in Thai."""
+    top = scored.nlargest(n, "Mismatch_Score").copy()
+    comp = top[["gap_outcome", "gap_complaint", "gap_gpp"]]
+    top["Reason_TH"] = comp.idxmax(axis=1).map(REASON_TH)
+    return top
