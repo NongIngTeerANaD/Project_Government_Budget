@@ -1,0 +1,78 @@
+Province_ID,Province_Name_TH,Province_Name_EN,Region,Lat,Long
+TH-10,กรุงเทพมหานคร,Bangkok,Central,13.75,100.50
+TH-11,สมุทรปราการ,Samut Prakan,Central,13.60,100.60
+TH-12,นนทบุรี,Nonthaburi,Central,13.86,100.51
+TH-13,ปทุมธานี,Pathum Thani,Central,14.02,100.53
+TH-14,พระนครศรีอยุธยา,Phra Nakhon Si Ayutthaya,Central,14.35,100.57
+TH-15,อ่างทอง,Ang Thong,Central,14.59,100.45
+TH-16,ลพบุรี,Lop Buri,Central,14.80,100.65
+TH-17,สิงห์บุรี,Sing Buri,Central,14.89,100.40
+TH-18,ชัยนาท,Chai Nat,Central,15.19,100.13
+TH-19,สระบุรี,Saraburi,Central,14.53,100.91
+TH-20,ชลบุรี,Chon Buri,East,13.36,100.98
+TH-21,ระยอง,Rayong,East,12.68,101.27
+TH-22,จันทบุรี,Chanthaburi,East,12.61,102.10
+TH-23,ตราด,Trat,East,12.24,102.52
+TH-24,ฉะเชิงเทรา,Chachoengsao,East,13.69,101.07
+TH-25,ปราจีนบุรี,Prachin Buri,East,14.05,101.37
+TH-26,นครนายก,Nakhon Nayok,Central,14.21,101.21
+TH-27,สระแก้ว,Sa Kaeo,East,13.82,102.07
+TH-30,นครราชสีมา,Nakhon Ratchasima,Northeast,14.97,102.10
+TH-31,บุรีรัมย์,Buri Ram,Northeast,14.99,103.10
+TH-32,สุรินทร์,Surin,Northeast,14.88,103.49
+TH-33,ศรีสะเกษ,Si Sa Ket,Northeast,15.12,104.32
+TH-34,อุบลราชธานี,Ubon Ratchathani,Northeast,15.23,104.86
+TH-35,ยโสธร,Yasothon,Northeast,15.79,104.15
+TH-36,ชัยภูมิ,Chaiyaphum,Northeast,15.81,102.03
+TH-37,อำนาจเจริญ,Amnat Charoen,Northeast,15.86,104.63
+TH-38,บึงกาฬ,Bueng Kan,Northeast,18.36,103.65
+TH-39,หนองบัวลำภู,Nong Bua Lam Phu,Northeast,17.20,102.44
+TH-40,ขอนแก่น,Khon Kaen,Northeast,16.44,102.83
+TH-41,อุดรธานี,Udon Thani,Northeast,17.41,102.79
+TH-42,เลย,Loei,Northeast,17.49,101.73
+TH-43,หนองคาย,Nong Khai,Northeast,17.88,102.74
+TH-44,มหาสารคาม,Maha Sarakham,Northeast,16.18,103.30
+TH-45,ร้อยเอ็ด,Roi Et,Northeast,16.05,103.65
+TH-46,กาฬสินธุ์,Kalasin,Northeast,16.43,103.51
+TH-47,สกลนคร,Sakon Nakhon,Northeast,17.16,104.15
+TH-48,นครพนม,Nakhon Phanom,Northeast,17.41,104.78
+TH-49,มุกดาหาร,Mukdahan,Northeast,16.54,104.72
+TH-50,เชียงใหม่,Chiang Mai,North,18.79,98.98
+TH-51,ลำพูน,Lamphun,North,18.57,99.01
+TH-52,ลำปาง,Lampang,North,18.29,99.49
+TH-53,อุตรดิตถ์,Uttaradit,North,17.63,100.10
+TH-54,แพร่,Phrae,North,18.15,100.14
+TH-55,น่าน,Nan,North,18.78,100.78
+TH-56,พะเยา,Phayao,North,19.17,99.90
+TH-57,เชียงราย,Chiang Rai,North,19.91,99.83
+TH-58,แม่ฮ่องสอน,Mae Hong Son,North,19.30,97.97
+TH-60,นครสวรรค์,Nakhon Sawan,Central,15.70,100.12
+TH-61,อุทัยธานี,Uthai Thani,Central,15.38,100.02
+TH-62,กำแพงเพชร,Kamphaeng Phet,North,16.48,99.52
+TH-63,ตาก,Tak,West,16.88,99.13
+TH-64,สุโขทัย,Sukhothai,North,17.01,99.82
+TH-65,พิษณุโลก,Phitsanulok,North,16.83,100.26
+TH-66,พิจิตร,Phichit,North,16.44,100.35
+TH-67,เพชรบูรณ์,Phetchabun,North,16.42,101.16
+TH-70,ราชบุรี,Ratchaburi,West,13.53,99.82
+TH-71,กาญจนบุรี,Kanchanaburi,West,14.02,99.53
+TH-72,สุพรรณบุรี,Suphan Buri,Central,14.47,100.12
+TH-73,นครปฐม,Nakhon Pathom,Central,13.82,100.06
+TH-74,สมุทรสาคร,Samut Sakhon,Central,13.55,100.27
+TH-75,สมุทรสงคราม,Samut Songkhram,Central,13.41,100.00
+TH-76,เพชรบุรี,Phetchaburi,West,13.11,99.94
+TH-77,ประจวบคีรีขันธ์,Prachuap Khiri Khan,West,11.81,99.80
+TH-80,นครศรีธรรมราช,Nakhon Si Thammarat,South,8.43,99.96
+TH-81,กระบี่,Krabi,South,8.09,98.91
+TH-82,พังงา,Phangnga,South,8.45,98.53
+TH-83,ภูเก็ต,Phuket,South,7.88,98.39
+TH-84,สุราษฎร์ธานี,Surat Thani,South,9.14,99.33
+TH-85,ระนอง,Ranong,South,9.96,98.64
+TH-86,ชุมพร,Chumphon,South,10.49,99.18
+TH-90,สงขลา,Songkhla,South,7.19,100.60
+TH-91,สตูล,Satun,South,6.62,100.07
+TH-92,ตรัง,Trang,South,7.56,99.61
+TH-93,พัทลุง,Phatthalung,South,7.62,100.08
+TH-94,ปัตตานี,Pattani,South,6.87,101.25
+TH-95,ยะลา,Yala,South,6.54,101.28
+TH-96,นราธิวาส,Narathiwat,South,6.43,101.82
