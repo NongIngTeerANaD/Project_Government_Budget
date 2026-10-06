@@ -86,6 +86,7 @@ def generate(raw_dir=C.RAW_DIR, seed: int = SEED, missing_rate: float = 0.015) -
     pd.DataFrame(rows_gpp, columns=["Fiscal_Year", "Province_ID", "GPP_Amount"]).to_csv(raw_dir / "gpp_province.csv", index=False)
     pd.DataFrame(rows_pop, columns=["Fiscal_Year", "Province_ID", "Population"]).to_csv(raw_dir / "population_province.csv", index=False)
     pd.DataFrame({"Fiscal_Year": years, "GDP_Amount": [NATIONAL_GDP[y] for y in years]}).to_csv(raw_dir / "gdp_national.csv", index=False)
+    (raw_dir / "SAMPLE_DATA.flag").write_text("synthetic sample data - not real statistics\n")
     print(f"sample raw data written to {raw_dir}")
 
 

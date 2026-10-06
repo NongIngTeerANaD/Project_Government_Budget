@@ -33,3 +33,12 @@ DOMAIN_COLOR = {d["id"]: d["color"] for d in DOMAINS}
 MISMATCH_WEIGHTS = {"w1": 0.4, "w2": 0.4, "w3": 0.2}
 
 COMPLAINT_RATE_PER = 100_000  # BRD section 7 risk 4
+
+
+GEOJSON_PATH = DATA_DIR / "geo" / "thailand_provinces.geojson"
+SAMPLE_FLAG = RAW_DIR / "SAMPLE_DATA.flag"
+
+
+def is_sample_data() -> bool:
+    """True while the dashboard runs on synthetic data (flag written by utils.sample_data)."""
+    return SAMPLE_FLAG.exists()
