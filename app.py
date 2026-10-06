@@ -1,6 +1,6 @@
 """Thailand Budget, GDP, Outcome & Complaint Analytics Dashboard (Plotly Dash).
 
-Run:  python app.py   ->  http://127.0.0.1:8050
+Run:  python app.py [--port 8060]   ->  http://127.0.0.1:8060
 """
 import dash
 import dash_bootstrap_components as dbc
@@ -47,4 +47,12 @@ def render_tab(tab_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=False, host="127.0.0.1", port=8050)
+    import argparse
+    import os
+
+    ap = argparse.ArgumentParser(description="Run the dashboard")
+    ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8060)), help="default 8060 (8050 is often taken)")
+    ap.add_argument("--debug", action="store_true")
+    args = ap.parse_args()
+    print(f"Open http://127.0.0.1:{args.port}")
+    app.run(debug=args.debug, host="127.0.0.1", port=args.port)

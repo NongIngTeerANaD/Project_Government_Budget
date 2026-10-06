@@ -8,7 +8,7 @@
 
 ```bash
 pip install -r requirements.txt
-python app.py            # http://127.0.0.1:8050 (สร้างข้อมูลตัวอย่างอัตโนมัติถ้ายังไม่มี data/raw)
+python app.py            # http://127.0.0.1:8060 (เปลี่ยนพอร์ตด้วย --port 9000) (สร้างข้อมูลตัวอย่างอัตโนมัติถ้ายังไม่มี data/raw)
 python -m pytest -q      # ทดสอบ
 ```
 
