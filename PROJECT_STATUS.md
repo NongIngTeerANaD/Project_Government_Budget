@@ -1,6 +1,6 @@
 # Project Status
 
-อัปเดตล่าสุด: 2026-10-06
+อัปเดตล่าสุด: 2026-10-06 (Phase 0–8 เสร็จ, รอข้อมูลจริง Phase 9)
 
 ## สรุปสถานะ
 
@@ -14,7 +14,7 @@
 | 5 | Tab 1: National Overview (4 KPI cards + 4 กราฟ) | ✅ เสร็จ |
 | 6 | Tab 2: Provincial Overview (choropleth 77 จังหวัด, bar, GPP line, radar, donut, ตารางจัดอันดับ) + cross-filtering | ✅ เสร็จ |
 | 7 | Tab 3: Mismatch Analysis (scatter, bubble, GPP scatter, heatmap, Top 10, correlation heatmap) | ✅ เสร็จ |
-| 8 | ทดสอบรวม / performance / ตรวจ UI ในเบราว์เซอร์ | 🔄 กำลังทำ (pytest + performance ผ่านแล้ว, เหลือตรวจ UI จริง) |
+| 8 | ทดสอบรวม / performance / ตรวจ UI ในเบราว์เซอร์ | ✅ เสร็จ (pytest 14 ผ่าน, callback ≤ 0.3 วินาที, ตรวจ UI ด้วย headless Chromium) |
 | 9 | นำข้อมูลจริงจาก Open Data เข้า pipeline | ⏸ รอผู้ใช้ดาวน์โหลดไฟล์ (ดูหมายเหตุ) |
 
 ## บันทึกความคืบหน้า
@@ -27,6 +27,13 @@
 - **2026-10-06** — Phase 4–7: `app.py` (Dash + Bootstrap FLATLY, tab render ตาม active tab), `layouts/` (filters + 3 tabs), `callbacks/` (tab1–3), `utils/figures.py`, `utils/queries.py`, `data/geo/thailand_provinces.geojson` (ขอบเขต 77 จังหวัด, รหัสตรง `Province_ID` ครบ), `assets/style.css`
   - Cross-filtering: คลิกจังหวัดบนแผนที่หรือแถวในตาราง → ตั้งค่า dropdown จังหวัดกลาง → ทุกกราฟ Tab 2 อัปเดต (คลิกซ้ำ = กลับเป็นทั้งประเทศ); Tab 3 ไฮไลต์จังหวัดที่เลือก
   - ทดสอบ: pytest 14 passed (pipeline, mismatch, callbacks ทุก tab, HTTP endpoints); เวลาประมวลผล callback 0.12–0.29 วินาที (เกณฑ์ ≤ 1.5 วินาที)
+- **2026-10-06** — Phase 8: ตรวจ UI ด้วย Chromium ถ่ายภาพ 3 tab ไม่มี JS error; พบ `go.Choropleth` ต้องโหลดแผนที่โลกจาก CDN → เปลี่ยนเป็น `go.Choroplethmap` (white-bg, ใช้ออฟไลน์ได้, ซูม/แพนได้, ต้อง plotly ≥ 5.24); จำกัดช่วงสีแผนที่ที่เปอร์เซ็นไทล์ 2–95 เพราะกรุงเทพฯ เป็น outlier
+
+## ขั้นถัดไป
+
+1. ดาวน์โหลดข้อมูลจริงตาม `thailand_open_data_sources.md` → แปลงเป็น CSV ตาม `docs/DATA_SCHEMA.md` ลง `data/raw/` (ลบ `SAMPLE_DATA.flag`) → `python -m utils.pipeline` (Phase 9)
+2. ยืนยันสูตร Mismatch (หาร B×C ด้วย 100) และนิยาม KPI รายด้านที่จะใช้จริงกับเจ้าของ BRD
+3. (ถ้าต้องการ) Top/Bottom 10 chart, GDP growth vs Outcome, ทดสอบการคลิกแผนที่ใน browser จริง
 
 ## หมายเหตุ / ข้อสมมติ
 

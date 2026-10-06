@@ -113,21 +113,22 @@ def fig_choropleth(agg: pd.DataFrame, metric: str, selected: str | None) -> go.F
     sel_idx = None
     if selected and selected in set(agg.Province_ID):
         sel_idx = [int(np.flatnonzero(agg.Province_ID.to_numpy() == selected)[0])]
-    fig = go.Figure(go.Choropleth(
+    fig = go.Figure(go.Choroplethmap(
         geojson=_geojson(), locations=agg.Province_ID, z=z, featureidkey="id",
-        colorscale=scale, marker_line_width=0.4, marker_line_color="#ffffff",
+        colorscale=scale, zmin=float(z.quantile(0.02)), zmax=float(z.quantile(0.95)),  # cap outliers (e.g. Bangkok) so other provinces stay readable
+        marker_line_width=0.4, marker_line_color="#ffffff", marker_opacity=0.9,
         colorbar=dict(title=dict(text=label, side="right"), thickness=12, len=0.8),
         customdata=np.stack([agg.Province_Name_TH, agg.Region], axis=1),
         hovertemplate="<b>%{customdata[0]}</b> (%{customdata[1]})<br>" + label + ": %{z:,.1f}<extra></extra>",
-        selectedpoints=sel_idx, selected=dict(marker=dict(opacity=1)), unselected=dict(marker=dict(opacity=0.45 if sel_idx else 1)),
+        selectedpoints=sel_idx, selected=dict(marker=dict(opacity=1)), unselected=dict(marker=dict(opacity=0.45 if sel_idx else 0.9)),
     ))
-    fig.update_geos(fitbounds="locations", visible=False, bgcolor="rgba(0,0,0,0)")
     if sel_idx:  # outline the selected province
         sel = agg.iloc[sel_idx]
-        fig.add_choropleth(geojson=_geojson(), locations=sel.Province_ID, z=[1], featureidkey="id", showscale=False,
-                           colorscale=[[0, "rgba(0,0,0,0)"], [1, "rgba(0,0,0,0)"]], marker_line_width=2.5,
-                           marker_line_color=HIGHLIGHT, hoverinfo="skip")
-    fig.update_layout(clickmode="event+select")
+        fig.add_trace(go.Choroplethmap(geojson=_geojson(), locations=sel.Province_ID, z=[1], featureidkey="id", showscale=False,
+                                       colorscale=[[0, "rgba(0,0,0,0)"], [1, "rgba(0,0,0,0)"]], marker_line_width=3,
+                                       marker_line_color=HIGHLIGHT, hoverinfo="skip"))
+    # white-bg style needs no tile server -> works offline
+    fig.update_layout(map=dict(style="white-bg", center=dict(lat=13.1, lon=101.0), zoom=4.5), clickmode="event+select")
     return _style(fig, f"แผนที่ 77 จังหวัด: {label}", height=560, legend_below=False).update_layout(margin=dict(l=0, r=0, t=45, b=0))
 
 
