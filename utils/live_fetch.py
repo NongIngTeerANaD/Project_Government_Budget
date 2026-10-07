@@ -52,7 +52,8 @@ def fetch_complaints() -> pd.DataFrame:
            .rename(columns={"n": "Complaint_Count"}))
     out["Year"] = out["Year"].astype(int)
     out["Complaint_Count"] = out["Complaint_Count"].round().astype(int)
-    assert set(out.Problem_Type) <= set(C.COMPLAINT_TYPE_TO_DOMAIN), "unexpected problem type from live source"
+    bad = set(out.Problem_Type) - set(C.COMPLAINT_TYPE_TO_DOMAIN)
+    assert not bad, f"unexpected problem type from live source: {sorted(map(repr, bad))}"
     assert len(out) > 500, "live data looks too small"
     return out
 
