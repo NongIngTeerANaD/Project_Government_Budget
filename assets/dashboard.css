@@ -221,3 +221,5 @@ select{font-size:12.5px}
 .ph{gap:8px;flex-wrap:nowrap}
 .zbox.sum{height:auto;width:900px;max-height:80%}
 .zbox.sum .zbody,.zbox.sum .sumtxt{flex:0 0 auto}.zbox.sum .zbody{gap:14px}
+.slab{fill:#fff;font:600 11.5px var(--mono);paint-order:stroke;stroke:#04060b;stroke-width:3px;pointer-events:none}
+.zbody .slab{font-size:8px;stroke-width:2px}

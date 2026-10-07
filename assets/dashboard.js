@@ -240,6 +240,8 @@ function scatter(id,xf,yf,o){
   s.selectAll("circle").data(pts).join("circle").attr("cx",d=>x(d.x)).attr("cy",d=>y(d.y)).attr("r",0)
     .attr("fill",d=>o.alert&&al.has(d.p.id)?(o.ac||"rgba(255,59,78,.75)"):"rgba(61,139,255,.55)").attr("stroke",d=>d.p.id===ST.sel?"#fff":(o.alert&&al.has(d.p.id)?(o.as||"#ff3b4e"):"#4cc9ff")).attr("stroke-width",d=>d.p.id===ST.sel?2:.8)
     .style("cursor","pointer").on("click",(e,d)=>pick(d.p.id,true)).call(c=>c.append("title").text(d=>d.p.th)).transition().duration(DUR).delay((d,i)=>i*8).ease(d3.easeBackOut).attr("r",d=>r(d.p.pop[yi()]));
+  const sp=pts.find(d=>d.p.id===ST.sel);
+  if(sp){const tx=x(sp.x),ty=y(sp.y),fl=tx>w-80;s.append("text").attr("class","slab").attr("x",fl?tx-9:tx+9).attr("y",ty-9).attr("text-anchor",fl?"end":"start").text(sp.p.th);}
 }
 function heat(id,list){
   const s=d3.select(id).html(""),w=320,h=190,lw=84,top=26,cw=(w-lw-6)/6,ch=(h-top-4)/list.length;
@@ -442,6 +444,10 @@ function openZoom(panel){
   const body=panel.querySelector(".chart,.row2"); if(!body) return;
   const t=panel.querySelector(".pt"),lg=panel.querySelector(":scope > .legend2"),rf=panel.querySelector(":scope > .ref"),zb=$("#zbody");
   $("#zt").textContent=t?t.textContent:""; zb.innerHTML=""; zb.appendChild(body.cloneNode(true)); if(lg) zb.appendChild(lg.cloneNode(true));
+  zb.querySelectorAll("svg circle").forEach(c=>{const t=c.querySelector("title"); if(!t) return; c.style.cursor="pointer";
+    c.addEventListener("click",ev=>{const svg=c.ownerSVGElement; svg.querySelectorAll(".zlab").forEach(n=>n.remove());
+      const cx=+c.getAttribute("cx"),cy=+c.getAttribute("cy"),vb=svg.viewBox.baseVal.width,fl=cx>vb-80,tx=document.createElementNS("http://www.w3.org/2000/svg","text");
+      tx.setAttribute("class","slab zlab");tx.setAttribute("x",fl?cx-9:cx+9);tx.setAttribute("y",cy-9);tx.setAttribute("text-anchor",fl?"end":"start");tx.textContent=t.textContent;svg.appendChild(tx);ev.stopPropagation();});});
   $("#zref").innerHTML=rf?rf.innerHTML:""; $(".zbox").classList.remove("sum"); $("#zoomm").hidden=false; $("#zclose").focus();
 }
 const closeZoom=()=>{$("#zoomm").hidden=true;$("#zbody").innerHTML="";};
