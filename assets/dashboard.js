@@ -108,9 +108,10 @@ function fly(){
   const [[x0,y0],[x1,y1]]=path.bounds(f), k=Math.min(5,.42/Math.max((x1-x0)/W,(y1-y0)/H)), cx=(x0+x1)/2, cy=(y0+y1)/2;
   flyTo(d3.zoomIdentity.translate(W/2-k*cx,H/2-k*cy).scale(k));
 }
+const bTxt=p=>{const b=p.b[yi()];if(b==null)return NOD;return b>=1000?fmt(b/1000,2)+" ล้านล้านบาท":fmt(b,1)+" พันล้านบาท";};
 function tip(e,id){
   const p=byId[id],t=$("#tip"),r=$(".mapbox").getBoundingClientRect(),m=M[ST.metric],v=m.get(p);
-  t.innerHTML=`<b>${p.th}</b>${m.label}<br><span>${v==null?NOD:m.full(v)}</span><br>ประชากร <span>${fmt(p.pop[yi()]/1e6,2)} ล้าน</span>`;
+  t.innerHTML=`<b>${p.th}</b>${m.label}<br><span>${v==null?NOD:m.full(v)}</span><br>ประชากร <span>${fmt(p.pop[yi()]/1e6,2)} ล้าน</span><br>งบประมาณจัดสรร <span>${bTxt(p)}</span>`;
   const W0=r.width/SC,H0=r.height/SC;let x=(e.clientX-r.left)/SC+14,y=(e.clientY-r.top)/SC+14; if(x>W0-170)x-=185; if(y>H0-90)y-=95;
   t.style.left=x+"px";t.style.top=y+"px";t.style.opacity=1;
 }
@@ -130,7 +131,7 @@ function drawMap(){
   $("#mapRef").innerHTML=m.ref()+'<span>· ขอบเขตจังหวัด: GeoJSON ข้อมูลเปิด</span>';
   
   const c=$("#callout"); if(!ST.sel){c.hidden=true}else{const p=byId[ST.sel];c.hidden=false;
-    c.innerHTML=`<div class="n">${p.th}</div><div class="m">${p.en} · ${REG[p.region]}<br>GPP ต่อหัว <b>${fmt(M.gpc.get(p))}</b> บาท<br>ประชากร <b>${fmt(p.pop[yi()])}</b><br>ร้องเรียน <b>${comp(p)==null?NOD:fmt(comp(p))+" เรื่อง"}</b><br>งบต่อหัว <b>${M.bpc.get(p)==null?NOD:fmt(M.bpc.get(p))+" บาท"}</b></div>`;}
+    c.innerHTML=`<div class="n">${p.th}</div><div class="m">${p.en} · ${REG[p.region]}<br>GPP ต่อหัว <b>${fmt(M.gpc.get(p))}</b> บาท<br>ประชากร <b>${fmt(p.pop[yi()])}</b><br>ร้องเรียน <b>${comp(p)==null?NOD:fmt(comp(p))+" เรื่อง"}</b><br>งบจัดสรร <b>${bTxt(p)}</b><br>งบต่อหัว <b>${M.bpc.get(p)==null?NOD:fmt(M.bpc.get(p))+" บาท"}</b></div>`;}
 }
 
 /* ---------- helpers ---------- */
