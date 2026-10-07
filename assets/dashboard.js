@@ -124,7 +124,7 @@ function drawMap(){
   $("#lgAl").innerHTML=MA.txt?`<i class="dot ${MA.k==="red"?"red":"amber"}"></i>${MA.txt}`:"";gM.selectAll("g.hot").raise();
   const sp=ST.sel?[byId[ST.sel]]:[];gM.selectAll("g.rip").data(sp,d=>d.id).join(e=>{const g=e.append("g").attr("class","rip");g.append("circle").attr("class","ripple").attr("r",14);return g;},u=>u,x=>x.remove()).attr("transform",d=>`translate(${proj([d.lon,d.lat])}) scale(${1/K})`);
   $("#mapRef").innerHTML=m.ref()+'<span>· ขอบเขตจังหวัด: GeoJSON ข้อมูลเปิด</span>';
-  $("#mtabs").querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===ST.metric));
+  
   const c=$("#callout"); if(!ST.sel){c.hidden=true}else{const p=byId[ST.sel];c.hidden=false;
     c.innerHTML=`<div class="n">${p.th}</div><div class="m">${p.en} · ${REG[p.region]}<br>GPP ต่อหัว <b>${fmt(M.gpc.get(p))}</b> บาท<br>ประชากร <b>${fmt(p.pop[yi()])}</b><br>ร้องเรียน <b>${comp(p)==null?NOD:fmt(comp(p))+" เรื่อง"}</b><br>งบต่อหัว <b>${M.bpc.get(p)==null?NOD:fmt(M.bpc.get(p))+" บาท"}</b></div>`;}
 }
@@ -330,7 +330,7 @@ function render(){
   if(ST.metric==="crate"&&ST.year<2020) ST.metric="gpc";
   if(ST.tab===3){ST.metric="mm";} else if(ST.metric==="mm") ST.metric="gpc";
   $("#yr").value=ST.year; 
-  $("#mtabs").innerHTML=ST.tab===3?'<span class="chip">Mismatch เฉลี่ย 6 ด้าน · ปี '+ST.year+'</span>':Object.entries(M).filter(([k])=>k!=="mm").map(([k,m])=>`<button class="tab" data-k="${k}" aria-pressed="${k===ST.metric}">${m.label}${k==="bpc"?" · 2023":""}</button>`).join("");
+  $("#mtabs").innerHTML=ST.tab===3?'<span class="chip">Mismatch เฉลี่ย 6 ด้าน · ปี '+ST.year+'</span>':`<label class="sub" for="msel">แสดงบนแผนที่</label><select id="msel" class="msel">${Object.entries(M).filter(([k])=>k!=="mm").map(([k,m])=>`<option value="${k}" ${k===ST.metric?"selected":""}>${m.label}${k==="bpc"?" · 2023":""}</option>`).join("")}</select>`;
   $("#reset").hidden=!(ST.sel&&ST.tab!==2);
   const nt=[];
   if(ST.tab===3) nt.push(hasB()?"Mismatch = ข้อมูลจริงเท่าที่มี (งบ 2023 + GPP + ร้องเรียน ด้าน 4–6) · ยังไม่มีข้อมูลผลลัพธ์ จึงเป็นดัชนีเบื้องต้น":"ปี "+ST.year+" ไม่มีข้อมูลงบประมาณรายจังหวัดจาก open data จึงคำนวณ Mismatch ไม่ได้ · เลือกปี 2023");
@@ -347,7 +347,7 @@ function render(){
 function pick(id,fromRank){ if(ST.tab===2) ST.sel=id; else ST.sel=(id===ST.sel&&!fromRank)?null:id; render(); }
 $("#yr").innerHTML=Y.map(y=>`<option value="${y}">${y}</option>`).join(""); $("#yr").value=ST.year;
 $("#yr").onchange=e=>{ST.year=+e.target.value;render();};
-$("#mtabs").addEventListener("click",e=>{const b=e.target.closest(".tab");if(b){ST.metric=b.dataset.k;render();}});
+$("#mtabs").addEventListener("change",e=>{if(e.target.id==="msel"){ST.metric=e.target.value;render();}});
 $("#reset").onclick=()=>{ST.sel=null;render();};
 document.querySelectorAll(".pill").forEach(b=>b.onclick=()=>{ST.tab=+b.dataset.t;render();});
 /* fit the 1600x900 stage into the window (no scrolling); narrow screens fall back to a normal scrolling page */

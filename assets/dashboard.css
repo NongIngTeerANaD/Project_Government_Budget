@@ -200,3 +200,4 @@ select{font-size:12.5px}
 .zref{font-size:13px;margin-top:12px}
 @media (prefers-reduced-motion:reduce){.zbox{animation:none}}
 .zbody .chart svg{max-width:900px;margin:0 auto}
+#mtabs{display:flex;align-items:center;gap:8px}.msel{font-size:12.5px;padding:5px 10px}
