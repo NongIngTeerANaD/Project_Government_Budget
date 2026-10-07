@@ -24,7 +24,7 @@ def province_agg(df: pd.DataFrame) -> pd.DataFrame:
     """Collapse province x domain rows to one row per province (selected domains)."""
     g = df.groupby("Province_ID")
     out = g.agg(Budget_total=("Budget_Amount", "sum"),
-                Complaints=("Complaint_Count", "sum"),
+                Complaints=("Complaint_Count", lambda s: s.sum(min_count=1)),
                 Outcome_avg=("Outcome_Normalized_Score", "mean"),
                 Population=("Population", "first"),
                 GPP=("GPP_Amount", "first"),

@@ -36,4 +36,4 @@ def render(year, domains, province, color_by):
             {"name": "C", "id": "C"}, {"name": "G", "id": "G"}, {"name": "สาเหตุที่ควรทบทวน", "id": "Reason_TH"}]
     return (F.fig_budget_vs_outcome(scored, color_by, sel), F.fig_budget_vs_complaints(agg, sel),
             F.fig_gpp_vs_budget(agg, sel), F.fig_correlation(agg), F.fig_mismatch_heatmap(scored),
-            top[[c["id"] for c in cols]].to_dict("records"), cols)
+            top[[c["id"] for c in cols]].astype(object).where(top[[c["id"] for c in cols]].notna(), None).to_dict("records"), cols)

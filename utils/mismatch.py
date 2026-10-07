@@ -38,7 +38,11 @@ def compute_mismatch(df: pd.DataFrame, weights: dict | None = None) -> pd.DataFr
     out["gap_outcome"] = w["w1"] * np.maximum(0, out.B - out.O)
     out["gap_complaint"] = w["w2"] * (out.B * out.C) / 100
     out["gap_gpp"] = w["w3"] * np.maximum(0, out.B - out.G)
-    out["Mismatch_Score"] = out[["gap_outcome", "gap_complaint", "gap_gpp"]].sum(axis=1)
+    # Real complaint data is missing for some domains/years (never filled with fake values): the score is then
+    # computed from the available terms and rescaled by their weights so it stays on the same 0-100 scale.
+    avail_w = (w["w1"] + w["w3"]) + w["w2"] * out["C"].notna()
+    out["Complaint_Missing"] = out["C"].isna()
+    out["Mismatch_Score"] = out[["gap_outcome", "gap_complaint", "gap_gpp"]].sum(axis=1, skipna=True) / avail_w * sum(w.values())
     return out
 
 
@@ -47,4 +51,5 @@ def top_mismatch(scored: pd.DataFrame, n: int = 10) -> pd.DataFrame:
     top = scored.nlargest(n, "Mismatch_Score").copy()
     comp = top[["gap_outcome", "gap_complaint", "gap_gpp"]]
     top["Reason_TH"] = comp.idxmax(axis=1).map(REASON_TH)
+    top.loc[top.Complaint_Missing, "Reason_TH"] += " (ไม่มีข้อมูลร้องเรียนจริง คำนวณจาก 2 องค์ประกอบ)"
     return top

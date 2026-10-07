@@ -40,6 +40,27 @@ def _interpolate(df: pd.DataFrame, group_cols: list, value_cols: list) -> pd.Dat
     return df
 
 
+def _complaints(grid: pd.DataFrame) -> pd.DataFrame:
+    """Complaint_Count per province x domain x year.
+
+    Real 1111 data (data/raw_real) is mapped to domains via config.COMPLAINT_TYPE_TO_DOMAIN and only
+    exists for REAL_COMPLAINT_YEARS x REAL_COMPLAINT_DOMAINS; everything else stays NaN (no fabricated values).
+    Absent rows inside that window mean 0 reported complaints.
+    """
+    real = C.REAL_DIR / "complaints_1111_province_type.csv"
+    if not real.exists():
+        return _read("complaints_province_domain.csv")[KEYS + ["Complaint_Count"]]
+    r = pd.read_csv(real)
+    r["Domain_ID"] = r.Problem_Type.map(C.COMPLAINT_TYPE_TO_DOMAIN)
+    assert r.Domain_ID.notna().all(), "unmapped 1111 problem type"
+    r = r.rename(columns={"Year": "Fiscal_Year", "Complaint_Count": "n"}).groupby(KEYS, as_index=False).n.sum()
+    out = grid.merge(r, on=KEYS, how="left")
+    window = out.Fiscal_Year.isin(C.REAL_COMPLAINT_YEARS) & out.Domain_ID.isin(C.REAL_COMPLAINT_DOMAINS)
+    out.loc[window, "n"] = out.loc[window, "n"].fillna(0)
+    out.loc[~window, "n"] = float("nan")
+    return out.rename(columns={"n": "Complaint_Count"})[KEYS + ["Complaint_Count"]]
+
+
 def build(verbose: bool = True) -> dict:
     prov = pd.read_csv(C.DATA_DIR / "dim_province.csv")
     pids = prov.Province_ID.tolist()
@@ -49,12 +70,10 @@ def build(verbose: bool = True) -> dict:
     grid = pd.MultiIndex.from_product([C.FISCAL_YEARS, pids, C.DOMAIN_IDS], names=KEYS).to_frame(index=False)
     fact = grid
     for fname, col in [("budget_province_domain.csv", "Budget_Amount"),
-                       ("outcome_province_domain.csv", "Outcome_Raw_Value"),
-                       ("complaints_province_domain.csv", "Complaint_Count")]:
+                       ("outcome_province_domain.csv", "Outcome_Raw_Value")]:
         fact = fact.merge(_read(fname)[KEYS + [col]], on=KEYS, how="left")
-    vals = ["Budget_Amount", "Outcome_Raw_Value", "Complaint_Count"]
-    fact = _interpolate(fact, ["Province_ID", "Domain_ID"], vals)
-    fact["Complaint_Count"] = fact["Complaint_Count"].round().astype(int)
+    fact = _interpolate(fact, ["Province_ID", "Domain_ID"], ["Budget_Amount", "Outcome_Raw_Value"])
+    fact = fact.merge(_complaints(grid), on=KEYS, how="left")  # real data is never interpolated; gaps stay NaN
     fact["Outcome_Normalized_Score"] = fact.groupby("Domain_ID")["Outcome_Raw_Value"].transform(minmax)
 
     # province x year fact
@@ -70,7 +89,7 @@ def build(verbose: bool = True) -> dict:
         fact.groupby(["Fiscal_Year", "Domain_ID"], as_index=False)["Budget_Amount"].sum()
     nat_c = C.RAW_DIR / "complaints_national.csv"
     national_complaints = pd.read_csv(nat_c) if nat_c.exists() else \
-        fact.groupby(["Fiscal_Year", "Domain_ID"], as_index=False)["Complaint_Count"].sum()
+        fact.groupby(["Fiscal_Year", "Domain_ID"], as_index=False)["Complaint_Count"].agg(lambda s: s.sum(min_count=1))
     if (C.REAL_DIR / "gdp_national.csv").exists() or not (C.REAL_DIR / "gpp_province.csv").exists():
         gdp = _read("gdp_national.csv")
     else:  # real GPP available -> national GDP ~= sum of 77 provincial GPP (documented in raw_real/SOURCES.md)

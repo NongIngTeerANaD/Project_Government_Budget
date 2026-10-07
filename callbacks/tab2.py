@@ -58,7 +58,7 @@ def render(year, domains, province, metric):
         {"name": "ร้องเรียน/100k", "id": "Complaint_rate", "type": "numeric", "format": {"specifier": ".1f"}},
     ]
     rank = agg.assign(Budget_mb=agg.Budget_total / 1e6, GPP_mb=agg.GPP / 1e6).sort_values("Budget_total", ascending=False)
-    data = rank[[c["id"] for c in cols]].round(2).to_dict("records")
+    data = rank[[c["id"] for c in cols]].round(2).astype(object).where(rank[[c["id"] for c in cols]].notna(), None).to_dict("records")
     style = [{"if": {"filter_query": f'{{Province_ID}} = "{sel}"'}, "backgroundColor": "#fff3cd", "fontWeight": "700"}] if sel else []
     return (caption, F.fig_choropleth(agg, metric, sel),
             F.fig_province_domain_budget(pdf, f"งบประมาณรายด้าน: {name}"),

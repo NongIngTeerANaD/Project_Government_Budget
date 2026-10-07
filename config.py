@@ -43,3 +43,18 @@ SAMPLE_FLAG = RAW_DIR / "SAMPLE_DATA.flag"
 def is_sample_data() -> bool:
     """True while the dashboard runs on synthetic data (flag written by utils.sample_data)."""
     return SAMPLE_FLAG.exists()
+
+
+# Real 1111 complaint problem types -> 6 standard domains (decision agreed with the project owner).
+# Domains 1-3 (education / health / infrastructure) have NO matching 1111 category -> no real data (left empty, never filled).
+COMPLAINT_TYPE_TO_DOMAIN = {
+    "ทรัพยากรธรรมชาติและสิ่งแวดล้อม": 4,
+    "เศรษฐกิจ": 6,
+    "สังคมและสวัสดิการ": 6,
+    "กฎหมาย": 5,
+    "การร้องเรียนกล่าวโทษเจ้าหน้าที่ของรัฐ": 5,
+    "การเมือง-การปกครอง": 5,
+    "พ.ร.บ. อำนวยความสะดวก": 5,
+}
+REAL_COMPLAINT_YEARS = [2020, 2021, 2022, 2023]
+REAL_COMPLAINT_DOMAINS = [4, 5, 6]
