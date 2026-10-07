@@ -56,6 +56,7 @@ const EX=["TH-10","TH-12"];
 const CC="#b6f23a";
 const P=DATA.prov, byId=Object.fromEntries(P.map(p=>[p.id,p]));
 const yi=()=>Y.indexOf(ST.year);
+const isB=()=>ST.metric==="bpc"||ST.metric==="bt";
 const exc=p=>ST.ex&&EX.includes(p.id);
 const cmpP=()=>ST.tab===2&&ST.cmp&&ST.cmp!==ST.sel&&byId[ST.cmp]?byId[ST.cmp]:null;
 const comp=(p,y=ST.year)=>{const c=p.cdy[y]; return c?(c[4]??0)+(c[5]??0)+(c[6]??0):null;};
@@ -65,6 +66,7 @@ const M={
   gpc:{label:"GPP ต่อหัว",get:p=>p.gpp[yi()]*1e9/p.pop[yi()],f:v=>fmt(v/1000)+"k",full:v=>fmt(v)+" บาท/คน",unit:"บาท/คน",ref:()=>REAL+"สศช. GPP ÷ ประชากร · "+ST.year},
   crate:{label:"ร้องเรียนต่อ 1 แสนคน",get:p=>crate(p),f:v=>fmt(v),full:v=>fmt(v,1)+" เรื่อง/แสนคน",unit:"เรื่อง/แสนคน",ref:()=>REAL+"1111 ด้าน 4–6 ÷ ประชากร สศช. · "+ST.year},
   bpc:{label:"งบประมาณต่อหัว",get:p=>p.b[yi()]==null?null:p.b[yi()]*1e9/p.pop[yi()],f:v=>fmt(v/1000,1)+"k",full:v=>fmt(v)+" บาท/คน",unit:"บาท/คน",ref:()=>(hasB()?REAL:PART)+"สำนักงบประมาณ จัดสรรงบ FY2566 (2023) ÷ ประชากร สศช."+(hasB()?"":" · ปี "+ST.year+" ไม่มีข้อมูล")},
+  bt:{label:"งบประมาณรวมจังหวัด",get:p=>p.b[yi()],f:v=>fmt(v,0),full:v=>fmt(v,1)+" พันล้านบาท",unit:"พันล้านบาท",ref:()=>(hasB()?REAL:PART)+"สำนักงบประมาณ จัดสรรงบ FY2566 (2023) รวมทุกด้าน · นับตามที่ตั้งหน่วยงาน"+(hasB()?"":" · ปี "+ST.year+" ไม่มีข้อมูล")},
   mm:{label:"Mismatch",get:p=>mmAvg(p),f:v=>fmt(v),full:v=>fmt(v,1)+" / 100",unit:"คะแนน",ref:()=>(hasB()?PART:'<span class="badge na">ไม่มีข้อมูล</span>')+"งบ FY2566 + GPP + ร้องเรียน (ด้าน 4–6) · ยังไม่มีผลลัพธ์ · "+ST.year}
 };
 /* alerts are page/metric specific: red = complaints, amber = economy / budget / mismatch */
@@ -81,7 +83,7 @@ function mapAlert(){
   if(ST.tab===3) return {k:"amber",list:topMM(),txt:"Mismatch สูงสุด 5 อันดับ"};
   if(ST.metric==="crate") return {k:"red",list:alerts().map(x=>x.p),txt:"ร้องเรียนพุ่งสูงสุด 5 อันดับเทียบปีก่อน"};
   if(ST.metric==="gpc") return {k:"amber",list:gppDrops().map(x=>x.p),txt:"GPP ลดลงมากสุด 5 อันดับเทียบปีก่อน"};
-  if(ST.metric==="bpc") return {k:"amber",list:lowBudget(),txt:"งบต่อหัวต่ำสุด 5 อันดับ"};
+  if(isB()) return {k:"amber",list:lowBudget(),txt:"งบต่อหัวต่ำสุด 5 อันดับ"};
   return {k:"amber",list:[],txt:""};
 }
 
@@ -111,7 +113,7 @@ function fly(){
 const bTxt=p=>{const b=p.b[yi()];if(b==null)return NOD;return b>=1000?fmt(b/1000,2)+" ล้านล้านบาท":fmt(b,1)+" พันล้านบาท";};
 function tip(e,id){
   const p=byId[id],t=$("#tip"),r=$(".mapbox").getBoundingClientRect(),m=M[ST.metric],v=m.get(p);
-  t.innerHTML=`<b>${p.th}</b>${m.label}<br><span>${v==null?NOD:m.full(v)}</span><br>ประชากร <span>${fmt(p.pop[yi()]/1e6,2)} ล้าน</span><br>งบประมาณจัดสรร <span>${bTxt(p)}</span>`;
+  t.innerHTML=`<b>${p.th}</b>${m.label}<br><span>${v==null?NOD:m.full(v)}</span><br>ประชากร <span>${fmt(p.pop[yi()]/1e6,2)} ล้าน</span>${ST.metric==="bt"?"":`<br>งบประมาณจัดสรร <span>${bTxt(p)}</span>`}`;
   const W0=r.width/SC,H0=r.height/SC;let x=(e.clientX-r.left)/SC+14,y=(e.clientY-r.top)/SC+14; if(x>W0-170)x-=185; if(y>H0-90)y-=95;
   t.style.left=x+"px";t.style.top=y+"px";t.style.opacity=1;
 }
@@ -298,7 +300,7 @@ function alertPanel(){
   const emp=t=>'<div class="empty">'+t+"</div>";
   if(ST.metric==="crate"){const al=alerts();
     return panel("⚠ แจ้งเตือนร้องเรียน · เพิ่มขึ้นเทียบปีก่อน",al.length?rankList(al.map(x=>x.p),p=>al.find(x=>x.p===p).pct,p=>"+"+fmt(al.find(x=>x.p===p).pct)+"%",al[0].pct,true):emp(ST.year<2021?"ต้องมีข้อมูลปีก่อนหน้า (เลือกปี 2021 ขึ้นไป)":"ไม่มีจังหวัดที่เข้าเกณฑ์"),REAL+"1111 · ด้าน 4–6 · ≥30 เรื่อง","alert","fix");}
-  if(ST.metric==="bpc"){const l=lowBudget();
+  if(isB()){const l=lowBudget();
     return panel("▲ งบต่อหัวต่ำสุด 5 อันดับ",l.length?rankList(l,p=>M.bpc.get(p),p=>M.bpc.f(M.bpc.get(p)),M.bpc.get(l[l.length-1]),"amber"):emp("ไม่มีข้อมูลงบประมาณปี "+ST.year+" (มีเฉพาะ 2023)"),M.bpc.ref(),"warn","fix");}
   const d=gppDrops();
   return panel("▲ GPP ลดลงเทียบปีก่อน",d.length?rankList(d.map(x=>x.p),p=>-d.find(x=>x.p===p).pct,p=>fmt(d.find(x=>x.p===p).pct,1)+"%",-d[0].pct,"amber"):emp(yi()<1?"ต้องมีข้อมูลปีก่อนหน้า":"ไม่มีจังหวัดที่ GPP ลดลง"),REAL+"สศช. GPP ปีต่อปี","warn","fix");
@@ -320,7 +322,7 @@ function tab1(){
   }
   const m=M[ST.metric],list=P.filter(p=>m.get(p)!=null&&!exc(p)).sort((a,b)=>m.get(b)-m.get(a)).slice(0,5),mx=list.length?m.get(list[0]):1,al=alerts();
   $("#R").innerHTML=
-   panel("Top 5 · "+m.label,list.length?rankList(list,m.get,p=>m.f(m.get(p)),mx):'<div class="empty">ไม่มีข้อมูล</div>',m.ref(),"","fix")+
+   panel("Top 5 · "+m.label+" · "+m.unit,list.length?rankList(list,m.get,p=>m.f(m.get(p)),mx):'<div class="empty">ไม่มีข้อมูล</div>',m.ref(),"","fix")+
    alertPanel()+
    panel("GPP ต่อหัว vs ร้องเรียนต่อแสนคน · "+ST.year,chart("sc","0 0 320 200"),REAL+"ขนาดวง = ประชากร"+(ST.metric==="crate"?" · แดง = ร้องเรียนพุ่ง":""));
   scatter("#sc",p=>M.gpc.get(p),p=>ST.year<2020?null:crate(p),{log:true,xl:"GPP ต่อหัว (บาท, log)",yl:"ร้องเรียน/แสนคน",xf:d=>d3.format("~s")(d),h:200,alert:ST.metric==="crate"});
@@ -369,11 +371,11 @@ function render(){
   if(ST.metric==="crate"&&ST.year<2020) ST.metric="gpc";
   if(ST.tab===3){ST.metric="mm";} else if(ST.metric==="mm") ST.metric="gpc";
   $("#yr").value=ST.year; 
-  $("#mtabs").innerHTML=ST.tab===3?'<span class="chip">Mismatch เฉลี่ย 6 ด้าน · ปี '+ST.year+'</span>':`<label class="sub" for="msel">แสดงบนแผนที่</label><select id="msel" class="msel">${Object.entries(M).filter(([k])=>k!=="mm").map(([k,m])=>`<option value="${k}" ${k===ST.metric?"selected":""}>${m.label}${k==="bpc"?" · 2023":""}</option>`).join("")}</select>`;
+  $("#mtabs").innerHTML=ST.tab===3?'<span class="chip">Mismatch เฉลี่ย 6 ด้าน · ปี '+ST.year+'</span>':`<label class="sub" for="msel">แสดงบนแผนที่</label><select id="msel" class="msel">${Object.entries(M).filter(([k])=>k!=="mm"&&k!=="bpc").map(([k,m])=>`<option value="${k}" ${k===ST.metric?"selected":""}>${m.label}${k==="bt"?" · 2023":""}</option>`).join("")}</select>`;
   $("#reset").hidden=!(ST.sel&&ST.tab!==2);
   const nt=[];
   if(ST.tab===3) nt.push(hasB()?"Mismatch = ข้อมูลจริงเท่าที่มี (งบ 2023 + GPP + ร้องเรียน ด้าน 4–6) · ยังไม่มีข้อมูลผลลัพธ์ จึงเป็นดัชนีเบื้องต้น":"ปี "+ST.year+" ไม่มีข้อมูลงบประมาณรายจังหวัดจาก open data จึงคำนวณ Mismatch ไม่ได้ · เลือกปี 2023");
-  else if(ST.metric==="bpc"&&!hasB()) nt.push("ปี "+ST.year+" ไม่มีข้อมูลงบประมาณรายจังหวัดจาก open data (มีเฉพาะ FY2566 = 2023)");
+  else if(isB()&&!hasB()) nt.push("ปี "+ST.year+" ไม่มีข้อมูลงบประมาณรายจังหวัดจาก open data (มีเฉพาะ FY2566 = 2023)");
   else if(ST.metric==="crate"&&ST.year<2020) nt.push("ปี 2019 ไม่มีข้อมูลเรื่องร้องเรียนจากชุดข้อมูลเปิด (เริ่มปี 2020)");
   $("#note").innerHTML=nt.map(t=>`<div class="banner">${t}</div>`).join("");
   document.querySelectorAll(".pill").forEach(b=>b.setAttribute("aria-selected",+b.dataset.t===ST.tab));
@@ -457,7 +459,7 @@ $("#stage").addEventListener("click",e=>{const c=e.target.closest&&e.target.clos
 $("#sumbtn").onclick=openSummary;$("#share").onclick=()=>copyText(shareUrl(),"คัดลอกลิงก์แล้ว (เปิดบนเครื่องเดียวกันที่รันแอปนี้)");
 $("#exc").onchange=e=>{ST.ex=e.target.checked;render();};
 (function(){try{const h=new URLSearchParams(location.hash.slice(1));const t=+h.get("t"),y=+h.get("y"),m=h.get("m"),sl=h.get("s"),cm=h.get("c");
-  if([1,2,3].includes(t))ST.tab=t;if(Y.includes(y))ST.year=y;if(m&&m!=="mm"&&M[m])ST.metric=m;if(sl&&byId[sl])ST.sel=sl;if(cm&&byId[cm])ST.cmp=cm;if(h.get("x")==="1"){ST.ex=true;$("#exc").checked=true;}}catch(e){}})();
+  if([1,2,3].includes(t))ST.tab=t;if(Y.includes(y))ST.year=y;if(m&&m!=="mm"&&M[m])ST.metric=m==="bpc"?"bt":m;if(sl&&byId[sl])ST.sel=sl;if(cm&&byId[cm])ST.cmp=cm;if(h.get("x")==="1"){ST.ex=true;$("#exc").checked=true;}}catch(e){}})();
 $("#zclose").onclick=closeZoom; $("#zoomm").onclick=e=>{if(e.target.id==="zoomm")closeZoom();};
 addEventListener("keydown",e=>{if(e.key==="Escape"){closeZoom();$("#modal").hidden=true;}});
 $("#srcbtn").onclick=()=>{$("#modal").hidden=false;};$("#mclose").onclick=()=>{$("#modal").hidden=true;};$("#modal").onclick=e=>{if(e.target.id==="modal")$("#modal").hidden=true;};
