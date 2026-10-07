@@ -13,7 +13,7 @@ root.innerHTML=`<div id="fit"><div class="stage" id="stage">
       <button class="pill" role="tab" data-t="3" aria-selected="false">3 · วิเคราะห์ความไม่สอดคล้อง (Mismatch)</button>
     </nav>
     <div class="ctrl">
-      <button class="srcbtn" id="srcbtn">ⓘ แหล่งข้อมูล</button>
+      <button class="srcbtn" id="share" title="คัดลอกลิงก์ที่จำมุมมองปัจจุบัน">🔗 คัดลอกลิงก์</button><button class="srcbtn" id="srcbtn">ⓘ แหล่งข้อมูล</button>
       <span class="chip"><i class="dot red"></i>ร้องเรียน</span><span class="chip"><i class="dot amber"></i>เศรษฐกิจ/งบ</span>
       <label for="yr" class="sub">ปี</label><select id="yr"></select>
     </div>
@@ -22,7 +22,7 @@ root.innerHTML=`<div id="fit"><div class="stage" id="stage">
     <div class="col" id="L"></div>
     <div class="col">
       <div class="panel mappanel">
-        <div class="ph" style="margin-bottom:0"><div class="tabs" role="group" aria-label="ตัวชี้วัดบนแผนที่" id="mtabs"></div><input id="psearch" class="psearch" list="plist" placeholder="🔍 ค้นหาจังหวัด" autocomplete="off" aria-label="ค้นหาจังหวัด"><datalist id="plist"></datalist><button class="reset" id="reset" hidden>ล้างการเลือก ✕</button></div>
+        <div class="ph" style="margin-bottom:0"><div class="tabs" role="group" aria-label="ตัวชี้วัดบนแผนที่" id="mtabs"></div><button class="reset" id="sumbtn" title="สรุปเป็นประโยค">📝 สรุป</button><label class="exl" title="ตัดออกจากสเกลสีและ Top 5 เพราะงบนับตามที่ตั้งสำนักงานใหญ่หน่วยงาน"><input type="checkbox" id="exc"> ไม่นับ กทม./นนทบุรี</label><input id="psearch" class="psearch" list="plist" placeholder="🔍 ค้นหาจังหวัด" autocomplete="off" aria-label="ค้นหาจังหวัด"><datalist id="plist"></datalist><button class="reset" id="reset" hidden>ล้างการเลือก ✕</button></div>
         <div id="note"></div>
         <div class="mapbox">
           <div class="glow-bg"></div>
@@ -37,7 +37,7 @@ root.innerHTML=`<div id="fit"><div class="stage" id="stage">
     </div>
     <div class="col" id="R"></div>
   </div>
-</div><div class="modal" id="zoomm" hidden><div class="zbox" role="dialog" aria-label="ขยายกราฟ"><div class="zh"><div class="zt" id="zt"></div><button class="reset" id="zclose">ปิด ✕</button></div><div class="zbody" id="zbody"></div><div class="ref zref" id="zref"></div></div></div><div class="modal" id="modal" hidden><div class="mbox" role="dialog" aria-label="แหล่งข้อมูล"><div style="display:flex;justify-content:space-between;align-items:center"><h2>แหล่งข้อมูลที่ใช้ในแดชบอร์ด</h2><button class="reset" id="mclose">ปิด ✕</button></div><div class="sub" id="mmeta"></div><div id="mtable"></div></div></div></div>`;
+</div><div class="toast" id="toast" hidden></div><div class="modal" id="zoomm" hidden><div class="zbox" role="dialog" aria-label="ขยายกราฟ"><div class="zh"><div class="zt" id="zt"></div><button class="reset" id="zclose">ปิด ✕</button></div><div class="zbody" id="zbody"></div><div class="ref zref" id="zref"></div></div></div><div class="modal" id="modal" hidden><div class="mbox" role="dialog" aria-label="แหล่งข้อมูล"><div style="display:flex;justify-content:space-between;align-items:center"><h2>แหล่งข้อมูลที่ใช้ในแดชบอร์ด</h2><button class="reset" id="mclose">ปิด ✕</button></div><div class="sub" id="mmeta"></div><div id="mtable"></div></div></div></div>`;
 
 const $=s=>document.querySelector(s);
 const Y=DATA.years, CY=[2020,2021,2022,2023];
@@ -51,10 +51,12 @@ const axisCol="rgba(140,170,255,.18)";
 const FL=DATA.flags||{}, BY=(DATA.meta&&DATA.meta.budget_years)||[2023];
 const REAL='<span class="badge real">ข้อมูลจริง</span>', PART='<span class="badge part">บางส่วน</span>';
 const hasB=()=>BY.includes(ST.year), NOD="ไม่มีข้อมูล";
-const ST={tab:1,year:2023,metric:"gpc",sel:null,cmp:null};
+const ST={tab:1,year:2023,metric:"gpc",sel:null,cmp:null,ex:false};
+const EX=["TH-10","TH-12"];
 const CC="#b6f23a";
 const P=DATA.prov, byId=Object.fromEntries(P.map(p=>[p.id,p]));
 const yi=()=>Y.indexOf(ST.year);
+const exc=p=>ST.ex&&EX.includes(p.id);
 const cmpP=()=>ST.tab===2&&ST.cmp&&ST.cmp!==ST.sel&&byId[ST.cmp]?byId[ST.cmp]:null;
 const comp=(p,y=ST.year)=>{const c=p.cdy[y]; return c?(c[4]??0)+(c[5]??0)+(c[6]??0):null;};
 const crate=(p,y=ST.year)=>{const c=comp(p,y); return c==null?null:c/p.pop[Y.indexOf(y)]*1e5;};
@@ -113,7 +115,7 @@ function tip(e,id){
   t.style.left=x+"px";t.style.top=y+"px";t.style.opacity=1;
 }
 function drawMap(){
-  const m=M[ST.metric], vals=P.map(m.get).filter(v=>v!=null).sort(d3.ascending);
+  const m=M[ST.metric], vals=P.filter(p=>!exc(p)).map(m.get).filter(v=>v!=null).sort(d3.ascending);
   const lo=d3.quantile(vals,.03),hi=d3.quantile(vals,.94);
   const col=d3.scaleLinear().domain([lo,(lo+hi)/2,hi]).range(["#0d2a5c","#1f64d6","#4cc9ff"]).clamp(true);
   paths.attr("fill",d=>{const v=m.get(byId[d.id]);return v==null?"#101828":col(v)}).classed("sel",d=>d.id===ST.sel);
@@ -252,12 +254,15 @@ function heat(id,list){
 /* ---------- tabs ---------- */
 const opts=(sel,skip)=>[...P].sort((a,b)=>a.th.localeCompare(b.th,"th")).filter(p=>p.id!==skip).map(p=>`<option value="${p.id}" ${p.id===sel?"selected":""}>${p.th}</option>`).join("");
 const provSelect=()=>`<div class="selrow"><div><label class="sub" for="ps">เลือกจังหวัด</label><select id="ps">${opts(ST.sel)}</select></div><div><label class="sub" for="cs">เทียบกับ</label><select id="cs"><option value="">— ไม่เทียบ —</option>${opts(ST.cmp,ST.sel)}</select></div></div>`;
-function provFlags(p){
+function flagList(p){
   const out=[],i=yi();
   const a=alerts().find(x=>x.p.id===p.id); if(a) out.push(["red","ร้องเรียน +"+fmt(a.pct)+"% vs "+(ST.year-1)]);
   if(i>0&&p.gpp[i]<p.gpp[i-1]) out.push(["amber","GPP ลด "+fmt((1-p.gpp[i]/p.gpp[i-1])*100,1)+"%"]);
   if(lowBudget().some(q=>q.id===p.id)) out.push(["amber","งบต่อหัวต่ำ 5 อันดับท้าย"]);
   if(topMM().some(q=>q.id===p.id)) out.push(["amber","Mismatch สูง 5 อันดับแรก"]);
+  return out;
+}
+function provFlags(p){const out=flagList(p);
   return `<div class="flags">${out.length?out.map(f=>`<span class="flag ${f[0]}">${f[0]==="red"?"⚠ ":"▲ "}${f[1]}</span>`).join(""):'<span class="flag ok">ไม่มีสัญญาณเตือน · '+ST.year+'</span>'}</div>`;
 }
 const cmpLegend=p=>{const q=cmpP();return q?`<div class="legend2"><span><i style="background:#4cc9ff"></i>${p.th}</span><span><i style="background:${CC}"></i>${q.th}</span></div>`:"";};
@@ -310,7 +315,7 @@ function tab1(){
     line("#line",[{c:"#4cc9ff",v:Y.map((_,i)=>nat(i).gpp)},{c:"#8a98b8",v:Y.map((_,i)=>nat(i).b),dash:"4 3"}]);
     donut("#donut","#dl",ST.year<2020?[0,0,0]:domComp(P,ST.year));
   }
-  const m=M[ST.metric],list=P.filter(p=>m.get(p)!=null).sort((a,b)=>m.get(b)-m.get(a)).slice(0,5),mx=list.length?m.get(list[0]):1,al=alerts();
+  const m=M[ST.metric],list=P.filter(p=>m.get(p)!=null&&!exc(p)).sort((a,b)=>m.get(b)-m.get(a)).slice(0,5),mx=list.length?m.get(list[0]):1,al=alerts();
   $("#R").innerHTML=
    panel("Top 5 · "+m.label,list.length?rankList(list,m.get,p=>m.f(m.get(p)),mx):'<div class="empty">ไม่มีข้อมูล</div>',m.ref(),"","fix")+
    alertPanel()+
@@ -346,7 +351,7 @@ function tab3(){
    panel("Mismatch เฉลี่ยรายด้าน · ทั้งประเทศ",chart("bars2","0 0 320 170"),"แถบฟ้าสว่าง = ด้านที่มีข้อมูลร้องเรียนจริง");
   if(p) hbars("#bars",Object.entries(p.dom[ST.year]).map(([k,v])=>[SH[k],v.mm,+k>=4?"#4cc9ff":"#3d8bff"]),{h:170,na});
   hbars("#bars2",dAvg,{h:170,na});
-  const sorted=[...P].filter(q=>mmAvg(q)!=null).sort((a,b)=>mmAvg(b)-mmAvg(a)), list=sorted.slice(0,5);
+  const sorted=[...P].filter(q=>mmAvg(q)!=null&&!exc(q)).sort((a,b)=>mmAvg(b)-mmAvg(a)), list=sorted.slice(0,5);
   $("#R").innerHTML=
    panel("▲ Top 5 · Mismatch สูงสุด",list.length?rankList(list,mmAvg,q=>fmt(mmAvg(q),1),mmAvg(list[0])||1,"amber"):'<div class="empty">'+na+"</div>",M.mm.ref(),"warn","fix")+
    panel(p&&ok?"Heatmap · "+p.th+" เทียบเฉลี่ยประเทศ × 6 ด้าน":"Heatmap · 7 จังหวัดที่ไม่สอดคล้องสูงสุด × 6 ด้าน",chart("heat","0 0 320 190"),"ตัวเลข = คะแนน Mismatch 0–100")+
@@ -398,15 +403,54 @@ $("#stage").addEventListener("mousemove",e=>{const p=e.target.closest&&e.target.
 const mt=DATA.sources.map(s=>`<tr><td>${s.label}</td><td>${s.links.map(l=>`<a href="${l[1]}" target="_blank" rel="noopener noreferrer">${l[0]}</a>`).join(", ")}</td><td>${s.real?'<span class="badge real">ข้อมูลจริง</span>':'<span class="badge na">ยังไม่มี open data</span>'}</td></tr>`).join("");
 $("#mtable").innerHTML=`<table><tr><th>ชุดข้อมูล</th><th>แหล่งที่มา</th><th>สถานะ</th></tr>${mt}</table>`;
 $("#mmeta").textContent="เรื่องร้องเรียนครอบคลุมปี "+DATA.meta.complaint_years[0]+"–"+DATA.meta.complaint_years.slice(-1)[0]+" ด้าน 4–6 (ปีปฏิทิน)"+(DATA.meta.complaints_fetched?" · ดึงสดจาก data.go.th เมื่อ "+DATA.meta.complaints_fetched:" · ใช้สำเนาที่บันทึกไว้")+" · งบประมาณรายจังหวัด: FY2566 (2023) เท่านั้น"+(DATA.meta.budget_fetched?" (ดึงสด "+DATA.meta.budget_fetched+")":" (สำเนาที่บันทึกไว้)")+" · ข้อมูลที่ไม่มีแสดง \"ไม่มีข้อมูล\" ไม่มีการประมาณค่าหรือสังเคราะห์";
+function toast(t){const e=$("#toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2200);}
+async function copyText(t,ok){try{await navigator.clipboard.writeText(t);toast(ok);}catch(e){const r=document.createRange();const n=$("#zbody .sumtxt")||$("#toast");try{r.selectNodeContents(n);const s2=getSelection();s2.removeAllRanges();s2.addRange(r);}catch(_){ }toast("เลือกข้อความแล้ว กด Ctrl+C เพื่อคัดลอก");}}
+const rkOf2=(f,p)=>[...P].filter(q=>f(q)!=null).sort((a,b)=>f(b)-f(a)).findIndex(q=>q.id===p.id)+1;
+const upDown=(a,b)=>{const d=delta(a,b);return d==null?"":` (${d>=0?"เพิ่มขึ้น":"ลดลง"} ${fmt(Math.abs(d),1)}% จากปีก่อน)`;};
+function summaryLines(){
+  const y=ST.year,i=yi(),L=[];
+  if(!ST.sel){
+    const n=nat(),n0=nat(i-1),cc=natComp(y),cp=natComp(y-1);
+    L.push(`ภาพรวมประเทศปี ${y}: GDP (ผลรวม GPP 77 จังหวัด) ${fmt(n.gpp,1)} ล้านล้านบาท`+(i>0?upDown(n.gpp,n0.gpp):""));
+    L.push(`ประชากรประมาณการ ${fmt(n.pop/1e6,1)} ล้านคน`);
+    L.push(cc==null?"เรื่องร้องเรียน: ไม่มีข้อมูลปีนี้":`เรื่องร้องเรียน (ด้าน 4–6) ${fmt(cc)} เรื่อง`+(cp?upDown(cc,cp):""));
+    L.push(n.b==null?`งบประมาณรายจังหวัด: ไม่มีข้อมูลปี ${y} (open data มีเฉพาะ FY2566 = 2023)`:`งบจัดสรรรายจังหวัดรวม ${fmt(n.b,2)} ล้านล้านบาท คิดเป็น ${fmt(n.b/n.gpp*100,1)}% ของ GDP`);
+    const f=gppDrops(); if(f.length) L.push("GPP ลดลงมากสุด: "+f.map(x=>`${x.p.th} (${fmt(x.pct,1)}%)`).join(", "));
+    const a=alerts(); if(a.length) L.push("ร้องเรียนพุ่งสูงสุด: "+a.map(x=>`${x.p.th} (+${fmt(x.pct)}%)`).join(", "));
+    return L;
+  }
+  const p=byId[ST.sel],g=M.gpc.get(p),b=M.bpc.get(p),cc=comp(p),cp=comp(p,y-1),mm=mmAvg(p);
+  L.push(`${p.th} (${REG[p.region]}) ปี ${y}: GPP ${fmt(p.gpp[i],0)} พันล้านบาท`+(i>0?upDown(p.gpp[i],p.gpp[i-1]):"")+`, GPP ต่อหัว ${fmt(g)} บาท/คน อันดับ ${rkOf2(M.gpc.get,p)} จาก 77`);
+  L.push(`ประชากรประมาณการ ${fmt(p.pop[i])} คน`);
+  L.push(cc==null?`เรื่องร้องเรียน: ไม่มีข้อมูลปี ${y}`:`เรื่องร้องเรียน (ด้าน 4–6) ${fmt(cc)} เรื่อง`+(cp?upDown(cc,cp):"")+`, ${fmt(crate(p),1)} เรื่องต่อแสนคน (อันดับ ${rkOf2(crate,p)} จาก 77 โดย 1 = สูงสุด)`);
+  L.push(b==null?`งบประมาณ: ไม่มีข้อมูลปี ${y} (open data มีเฉพาะ FY2566 = 2023)`:`งบจัดสรร ${fmt(p.b[i],1)} พันล้านบาท = ${fmt(b)} บาท/คน อันดับ ${rkOf2(M.bpc.get,p)} จาก 77 (${b>=d3.median(P,M.bpc.get)?"สูงกว่า":"ต่ำกว่า"}ค่ากลาง)`+(EX.includes(p.id)?" หมายเหตุ: งบนับตามที่ตั้งหน่วยงาน จึงอาจสูงเกินจริง":""));
+  if(mm!=null){const t=Object.entries(p.dom[y]).filter(([k,v])=>v.mm!=null).sort((a,b)=>b[1].mm-a[1].mm)[0];
+    L.push(`Mismatch เฉลี่ย ${fmt(mm,1)}/100 อันดับ ${rkOf2(mmAvg,p)} จาก 77 ด้านที่สูงสุดคือ ${SH[t[0]]} (${fmt(t[1].mm,1)}) (คำนวณจากข้อมูลที่มี ยังไม่รวมผลลัพธ์)`);}
+  const fl=flagList(p); L.push(fl.length?"สัญญาณเตือน: "+fl.map(x=>x[1]).join(" · "):"ไม่มีสัญญาณเตือนในปีนี้");
+  return L;
+}
+function openSummary(){
+  const L=summaryLines(),t=ST.sel?byId[ST.sel].th:"ทั้งประเทศ";
+  $("#zt").textContent="สรุปเป็นประโยค · "+t+" · "+ST.year;
+  $("#zbody").innerHTML=`<ul class="sumtxt">${L.map(x=>`<li>${x}</li>`).join("")}</ul><div><button class="reset" id="sumcopy">คัดลอกข้อความ</button></div>`;
+  $("#zref").innerHTML=REAL+"สร้างจากตัวเลขในแดชบอร์ดด้วยเทมเพลต ไม่ใช่ข้อความจาก AI · สศช. · 1111 · สำนักงบประมาณ";
+  $("#sumcopy").onclick=()=>copyText(L.map(x=>"• "+x).join("\n"),"คัดลอกข้อความแล้ว");
+  $(".zbox").classList.add("sum");$("#zoomm").hidden=false;$("#zclose").focus();
+}
+function shareUrl(){const q=new URLSearchParams({t:ST.tab,y:ST.year,m:ST.metric==="mm"?"gpc":ST.metric});if(ST.sel)q.set("s",ST.sel);if(ST.cmp)q.set("c",ST.cmp);if(ST.ex)q.set("x","1");return location.href.split("#")[0]+"#"+q;}
 function openZoom(panel){
   const body=panel.querySelector(".chart,.row2"); if(!body) return;
   const t=panel.querySelector(".pt"),lg=panel.querySelector(":scope > .legend2"),rf=panel.querySelector(":scope > .ref"),zb=$("#zbody");
   $("#zt").textContent=t?t.textContent:""; zb.innerHTML=""; zb.appendChild(body.cloneNode(true)); if(lg) zb.appendChild(lg.cloneNode(true));
-  $("#zref").innerHTML=rf?rf.innerHTML:""; $("#zoomm").hidden=false; $("#zclose").focus();
+  $("#zref").innerHTML=rf?rf.innerHTML:""; $(".zbox").classList.remove("sum"); $("#zoomm").hidden=false; $("#zclose").focus();
 }
 const closeZoom=()=>{$("#zoomm").hidden=true;$("#zbody").innerHTML="";};
 $("#stage").addEventListener("click",e=>{const c=e.target.closest&&e.target.closest(".chart,.row2"); if(!c) return;
   if(e.target.tagName==="circle"&&e.target.style.cursor==="pointer") return; const p=c.closest(".panel"); if(p) openZoom(p);});
+$("#sumbtn").onclick=openSummary;$("#share").onclick=()=>copyText(shareUrl(),"คัดลอกลิงก์แล้ว (เปิดบนเครื่องเดียวกันที่รันแอปนี้)");
+$("#exc").onchange=e=>{ST.ex=e.target.checked;render();};
+(function(){try{const h=new URLSearchParams(location.hash.slice(1));const t=+h.get("t"),y=+h.get("y"),m=h.get("m"),sl=h.get("s"),cm=h.get("c");
+  if([1,2,3].includes(t))ST.tab=t;if(Y.includes(y))ST.year=y;if(m&&m!=="mm"&&M[m])ST.metric=m;if(sl&&byId[sl])ST.sel=sl;if(cm&&byId[cm])ST.cmp=cm;if(h.get("x")==="1"){ST.ex=true;$("#exc").checked=true;}}catch(e){}})();
 $("#zclose").onclick=closeZoom; $("#zoomm").onclick=e=>{if(e.target.id==="zoomm")closeZoom();};
 addEventListener("keydown",e=>{if(e.key==="Escape"){closeZoom();$("#modal").hidden=true;}});
 $("#srcbtn").onclick=()=>{$("#modal").hidden=false;};$("#mclose").onclick=()=>{$("#modal").hidden=true;};$("#modal").onclick=e=>{if(e.target.id==="modal")$("#modal").hidden=true;};
