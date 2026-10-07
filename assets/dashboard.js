@@ -22,7 +22,7 @@ root.innerHTML=`<div id="fit"><div class="stage" id="stage">
     <div class="col" id="L"></div>
     <div class="col">
       <div class="panel mappanel">
-        <div class="ph" style="margin-bottom:0"><div class="tabs" role="group" aria-label="ตัวชี้วัดบนแผนที่" id="mtabs"></div><button class="reset" id="reset" hidden>ล้างการเลือก ✕</button></div>
+        <div class="ph" style="margin-bottom:0"><div class="tabs" role="group" aria-label="ตัวชี้วัดบนแผนที่" id="mtabs"></div><input id="psearch" class="psearch" list="plist" placeholder="🔍 ค้นหาจังหวัด" autocomplete="off" aria-label="ค้นหาจังหวัด"><datalist id="plist"></datalist><button class="reset" id="reset" hidden>ล้างการเลือก ✕</button></div>
         <div id="note"></div>
         <div class="mapbox">
           <div class="glow-bg"></div>
@@ -51,9 +51,11 @@ const axisCol="rgba(140,170,255,.18)";
 const FL=DATA.flags||{}, BY=(DATA.meta&&DATA.meta.budget_years)||[2023];
 const REAL='<span class="badge real">ข้อมูลจริง</span>', PART='<span class="badge part">บางส่วน</span>';
 const hasB=()=>BY.includes(ST.year), NOD="ไม่มีข้อมูล";
-const ST={tab:1,year:2023,metric:"gpc",sel:null};
+const ST={tab:1,year:2023,metric:"gpc",sel:null,cmp:null};
+const CC="#b6f23a";
 const P=DATA.prov, byId=Object.fromEntries(P.map(p=>[p.id,p]));
 const yi=()=>Y.indexOf(ST.year);
+const cmpP=()=>ST.tab===2&&ST.cmp&&ST.cmp!==ST.sel&&byId[ST.cmp]?byId[ST.cmp]:null;
 const comp=(p,y=ST.year)=>{const c=p.cdy[y]; return c?(c[4]??0)+(c[5]??0)+(c[6]??0):null;};
 const crate=(p,y=ST.year)=>{const c=comp(p,y); return c==null?null:c/p.pop[Y.indexOf(y)]*1e5;};
 const mmAvg=p=>d3.mean(Object.values(p.dom[ST.year]),d=>d.mm)??null;
@@ -136,7 +138,7 @@ function cu(v){const m=String(v).match(/^(#?)([\d,]+(?:\.\d+)?)(.*)$/);if(!m)ret
   return `<span class="cu" data-pre="${m[1]}" data-to="${to}" data-dec="${dec}" data-suf="${m[3].replace(/"/g,"")}">${v}</span>`;}
 function countUp(){document.querySelectorAll(".cu").forEach(el=>{if(RM)return;const to=+el.dataset.to,dec=+el.dataset.dec,pre=el.dataset.pre,suf=el.dataset.suf;
   d3.select(el).transition().duration(900).ease(d3.easeCubicOut).tween("t",()=>{const i=d3.interpolateNumber(0,to);return t=>{el.textContent=pre+i(t).toLocaleString("en-US",{minimumFractionDigits:dec,maximumFractionDigits:dec})+suf;};});});}
-function kpiHtml(list){return `<div class="kpis">`+list.map(x=>`<div class="kpi ${x.alert?"alert":x.warn?"warn":""}"><div class="l"><span>${x.l}</span></div><div class="v">${cu(x.v)}<small>${x.u||""}</small></div><div class="d ${x.bad?"bad":x.amb?"warn":""}">${x.d||"&nbsp;"}</div></div>`).join("")+`</div>`}
+function kpiHtml(list){return `<div class="kpis">`+list.map(x=>`<div class="kpi ${x.alert?"alert":x.warn?"warn":""}"><div class="l"><span>${x.l}</span></div><div class="v">${cu(x.v)}<small>${x.u||""}</small></div><div class="d ${x.bad?"bad":x.amb?"warn":""}">${x.d||"&nbsp;"}</div>${x.c?`<div class="d cmpv">${x.c}</div>`:""}</div>`).join("")+`</div>`}
 function rankList(items,fv,fmtv,mx,al){return items.map((p,i)=>`<button class="rk ${al===true?"al":al==="amber"?"wr":""}" data-id="${p.id}"><span class="i">${String(i+1).padStart(2,"0")}</span><span class="nm"><div>${p.th}</div><div class="bar"><i style="width:${Math.max(3,fv(p)/mx*100)}%"></i></div></span><span class="val">${fmtv(p)}</span></button>`).join("")}
 const bindRk=()=>document.querySelectorAll(".rk").forEach(b=>b.onclick=()=>pick(b.dataset.id,true));
 const nat=(i=yi())=>({gpp:d3.sum(P,p=>p.gpp[i])/1000,pop:d3.sum(P,p=>p.pop[i]),b:P.some(p=>p.b[i]!=null)?d3.sum(P,p=>p.b[i])/1000:null});
@@ -158,7 +160,7 @@ function line(id,series,opt={}){
   series.forEach(se=>{
     gC.append("path").attr("d",d3.line().defined(d=>d!=null).x((_,i)=>x(Y[i])).y(d=>y(d)).curve(d3.curveMonotoneX)(se.v)).attr("fill","none").attr("stroke",se.c).attr("stroke-width",2).attr("stroke-dasharray",se.dash||null).style("filter",`drop-shadow(0 0 4px ${se.c}88)`);
     gC.selectAll(null).data(se.v.map((v,i)=>[v,i]).filter(d=>d[0]!=null)).join("circle").attr("cx",d=>x(Y[d[1]])).attr("cy",d=>y(d[0])).attr("r",d=>Y[d[1]]===ST.year?3.8:2).attr("fill",se.c);
-    if(se.v[yi()]!=null) gC.append("text").attr("class","axis").attr("x",x(ST.year)).attr("y",y(se.v[yi()])-8).attr("text-anchor","middle").style("fill","#eef3ff").text(fmt(se.v[yi()],opt.d??1));
+    if(se.v[yi()]!=null) gC.append("text").attr("class","axis").attr("x",x(ST.year)).attr("y",y(se.v[yi()])-8).attr("text-anchor",ST.year===Y[Y.length-1]?"end":"middle").style("fill","#eef3ff").text(fmt(se.v[yi()],opt.d??1));
   });
 }
 function donut(id,legId,vals){
@@ -179,9 +181,20 @@ function hbars(id,rows,o={}){
   g.append("text").attr("class","axis").attr("x",-6).attr("y",y.bandwidth()/2+3).attr("text-anchor","end").text(d=>d[0]);
   g.append("text").attr("class","axis").attr("x",d=>x(d[1])+5).attr("y",y.bandwidth()/2+3).style("fill","#eef3ff").text(d=>fmt(d[1],o.d??1));
 }
-function area(id,vals){
+function gbars(id,rows,o={}){
+  const s=d3.select(id).html(""),w=320,h=o.h||150,lw=o.lw||104;
+  const ok=rows.filter(d=>d[1]!=null||d[2]!=null);
+  if(!ok.length){s.append("text").attr("x",w/2).attr("y",h/2).attr("text-anchor","middle").attr("class","axis").text(o.na||NOD);return;}
+  const x=d3.scaleLinear().domain([0,d3.max(ok,d=>Math.max(d[1]||0,d[2]||0))||1]).range([0,w-lw-40]),y=d3.scaleBand().domain(rows.map(d=>d[0])).range([4,h-4]).padding(.25);
+  const g=s.selectAll("g").data(rows).join("g").attr("transform",d=>`translate(${lw},${y(d[0])})`),bh=y.bandwidth()/2-1;
+  g.append("text").attr("class","axis").attr("x",-6).attr("y",y.bandwidth()/2+3).attr("text-anchor","end").text(d=>d[0]);
+  [[1,o.c1||"#4cc9ff",0],[2,o.c2||CC,bh+2]].forEach(([k,c,dy])=>{
+    g.filter(d=>d[k]!=null).append("rect").attr("y",dy).attr("height",bh).attr("rx",2).attr("fill",c).attr("width",0).transition().duration(DUR).ease(d3.easeCubicOut).attr("width",d=>x(d[k]));
+    g.filter(d=>d[k]!=null).append("text").attr("class","axis").attr("x",d=>x(d[k])+4).attr("y",dy+bh-1).style("fill","#eef3ff").text(d=>fmt(d[k],o.d??1));});
+}
+function area(id,vals,vals2){
   const s=d3.select(id).html(""),w=320,h=130,m={l:36,r:12,t:14,b:18};
-  const x=d3.scalePoint().domain(CY).range([m.l,w-m.r]),y=d3.scaleLinear().domain([0,d3.max(vals)*1.15||1]).nice().range([h-m.b,m.t]);
+  const x=d3.scalePoint().domain(CY).range([m.l,w-m.r]),y=d3.scaleLinear().domain([0,d3.max(vals.concat(vals2||[]))*1.15||1]).nice().range([h-m.b,m.t]);
   const gid="g"+Math.random().toString(36).slice(2,6);
   const df=s.append("defs").append("linearGradient").attr("id",gid).attr("x1",0).attr("y1",0).attr("x2",0).attr("y2",1);
   df.append("stop").attr("offset","0%").attr("stop-color","#ff3b4e").attr("stop-opacity",.45);df.append("stop").attr("offset","100%").attr("stop-color","#ff3b4e").attr("stop-opacity",0);
@@ -189,25 +202,27 @@ function area(id,vals){
   s.append("g").selectAll("text").data(y.ticks(3)).join("text").attr("class","axis").attr("x",m.l-5).attr("y",d=>y(d)+3).attr("text-anchor","end").text(d=>d>=1000?d/1000+"k":d);
   s.append("g").selectAll("text").data(CY).join("text").attr("class","axis").attr("x",x).attr("y",h-4).attr("text-anchor","middle").text(d=>d).style("fill",d=>d===ST.year?"#eef3ff":"");
   const cid="c"+gid;s.append("clipPath").attr("id",cid).append("rect").attr("x",0).attr("y",0).attr("height",h).attr("width",RM?w:0).transition().duration(DUR*1.4).ease(d3.easeCubicOut).attr("width",w);
-  const gC=s.append("g").attr("clip-path",`url(#${cid})`);
-  gC.append("path").attr("d",d3.area().x((_,i)=>x(CY[i])).y0(h-m.b).y1(d=>y(d)).curve(d3.curveMonotoneX)(vals)).attr("fill",`url(#${gid})`);
-  gC.append("path").attr("d",d3.line().x((_,i)=>x(CY[i])).y(d=>y(d)).curve(d3.curveMonotoneX)(vals)).attr("fill","none").attr("stroke","#ff3b4e").attr("stroke-width",2);
-  gC.selectAll("circle").data(vals).join("circle").attr("cx",(_,i)=>x(CY[i])).attr("cy",y).attr("r",(_,i)=>CY[i]===ST.year?3.8:2).attr("fill","#ff3b4e");
-  s.append("text").attr("class","axis").attr("x",x(2023)).attr("y",y(vals[3])-8).attr("text-anchor","end").style("fill","#eef3ff").text(fmt(vals[3]));
+  const gC=s.append("g").attr("clip-path",`url(#${cid})`),col=vals2?"#4cc9ff":"#ff3b4e";
+  const ln=(v,c,dash)=>{gC.append("path").attr("d",d3.line().x((_,i)=>x(CY[i])).y(d=>y(d)).curve(d3.curveMonotoneX)(v)).attr("fill","none").attr("stroke",c).attr("stroke-width",2).attr("stroke-dasharray",dash||null);
+    gC.selectAll(null).data(v).join("circle").attr("cx",(_,i)=>x(CY[i])).attr("cy",y).attr("r",(_,i)=>CY[i]===ST.year?3.8:2).attr("fill",c);
+    s.append("text").attr("class","axis").attr("x",x(2023)).attr("y",y(v[3])-8).attr("text-anchor","end").style("fill",c).text(fmt(v[3]));};
+  if(!vals2) gC.append("path").attr("d",d3.area().x((_,i)=>x(CY[i])).y0(h-m.b).y1(d=>y(d)).curve(d3.curveMonotoneX)(vals)).attr("fill",`url(#${gid})`);
+  ln(vals,col); if(vals2) ln(vals2,CC,"5 3");
 }
-function radar(id,p){
+function radar(id,p,q){
   const s=d3.select(id).html(""),cx=160,cy=98,R=70;
-  const pct=f=>{const arr=P.map(f).filter(v=>v!=null).sort(d3.ascending);return q=>{const v=f(q);return v==null?0:d3.bisectRight(arr,v)/arr.length*100;}};
-  const rv=q=>{const r=crate(q);return r==null?null:-r};
-  const ax=[["GPP ต่อหัว",pct(M.gpc.get),M.gpc.get],["GPP รวม",pct(q=>q.gpp[yi()]),q=>q.gpp[yi()]],["ประชากร",pct(q=>q.pop[yi()]),q=>q.pop[yi()]],["งบ/หัว",pct(M.bpc.get),M.bpc.get],["ร้องเรียนต่ำ",pct(rv),rv]];
+  const pct=f=>{const arr=P.map(f).filter(v=>v!=null).sort(d3.ascending);return z=>{const v=f(z);return v==null?0:d3.bisectRight(arr,v)/arr.length*100;}};
+  const rv=z=>{const r=crate(z);return r==null?null:-r};
+  const ax=[["GPP ต่อหัว",pct(M.gpc.get),M.gpc.get],["GPP รวม",pct(z=>z.gpp[yi()]),z=>z.gpp[yi()]],["ประชากร",pct(z=>z.pop[yi()]),z=>z.pop[yi()]],["งบ/หัว",pct(M.bpc.get),M.bpc.get],["ร้องเรียนต่ำ",pct(rv),rv]];
   const n=ax.length,ang=i=>-Math.PI/2+i*2*Math.PI/n,pt=(i,v)=>[cx+Math.cos(ang(i))*R*v/100,cy+Math.sin(ang(i))*R*v/100];
   [25,50,75,100].forEach(r=>s.append("polygon").attr("points",d3.range(n).map(i=>pt(i,r)).join(" ")).attr("fill","none").attr("stroke",axisCol));
   d3.range(n).forEach(i=>{const e=pt(i,100);s.append("line").attr("x1",cx).attr("y1",cy).attr("x2",e[0]).attr("y2",e[1]).attr("stroke",axisCol);
-    const l=pt(i,128);s.append("text").attr("class","axis").attr("x",l[0]).attr("y",l[1]+3).attr("text-anchor",Math.abs(l[0]-cx)<6?"middle":l[0]>cx?"start":"end").text(ax[i][0]+(ax[i][2](p)==null?" (ไม่มีข้อมูล)":""));});
+    const l=pt(i,128);s.append("text").attr("class","axis").attr("x",l[0]).attr("y",l[1]+3).attr("text-anchor",Math.abs(l[0]-cx)<6?"middle":l[0]>cx?"start":"end").text(ax[i][0]+(ax[i][2](p)==null||(q&&ax[i][2](q)==null)?" (ไม่มีข้อมูล)":""));});
   s.append("polygon").attr("points",d3.range(n).map(i=>pt(i,50)).join(" ")).attr("fill","none").attr("stroke","#8a98b8").attr("stroke-dasharray","3 3");
-  const vals=ax.map(a=>a[1](p));
-  s.append("polygon").attr("points",vals.map((v,i)=>pt(i,0)).join(" ")).attr("fill","rgba(76,201,255,.22)").attr("stroke","#4cc9ff").attr("stroke-width",2).style("filter","drop-shadow(0 0 5px #4cc9ff88)").transition().duration(DUR).ease(d3.easeBackOut.overshoot(1.2)).attr("points",vals.map((v,i)=>pt(i,v)).join(" "));
-  vals.forEach((v,i)=>s.append("circle").attr("cx",pt(i,v)[0]).attr("cy",pt(i,v)[1]).attr("r",0).attr("fill","#4cc9ff").transition().delay(DUR*.6).duration(300).attr("r",2.8));
+  const draw=(z,c,f)=>{const vals=ax.map(a=>a[1](z));
+    s.append("polygon").attr("points",vals.map((v,i)=>pt(i,0)).join(" ")).attr("fill",f).attr("stroke",c).attr("stroke-width",2).style("filter",`drop-shadow(0 0 5px ${c}88)`).transition().duration(DUR).ease(d3.easeBackOut.overshoot(1.2)).attr("points",vals.map((v,i)=>pt(i,v)).join(" "));
+    vals.forEach((v,i)=>s.append("circle").attr("cx",pt(i,v)[0]).attr("cy",pt(i,v)[1]).attr("r",0).attr("fill",c).transition().delay(DUR*.6).duration(300).attr("r",2.8));};
+  draw(p,"#4cc9ff","rgba(76,201,255,.22)"); if(q) draw(q,CC,"rgba(182,242,58,.16)");
 }
 function scatter(id,xf,yf,o){
   const s=d3.select(id).html(""),w=320,h=o.h||190,m={l:38,r:12,t:22,b:30};
@@ -235,7 +250,8 @@ function heat(id,list){
 }
 
 /* ---------- tabs ---------- */
-const provSelect=()=>`<label class="sub" for="ps">เลือกจังหวัด</label><select id="ps" style="width:100%;margin:3px 0 8px">${[...P].sort((a,b)=>a.th.localeCompare(b.th,"th")).map(p=>`<option value="${p.id}" ${p.id===ST.sel?"selected":""}>${p.th}</option>`).join("")}</select>`;
+const opts=(sel,skip)=>[...P].sort((a,b)=>a.th.localeCompare(b.th,"th")).filter(p=>p.id!==skip).map(p=>`<option value="${p.id}" ${p.id===sel?"selected":""}>${p.th}</option>`).join("");
+const provSelect=()=>`<div class="selrow"><div><label class="sub" for="ps">เลือกจังหวัด</label><select id="ps">${opts(ST.sel)}</select></div><div><label class="sub" for="cs">เทียบกับ</label><select id="cs"><option value="">— ไม่เทียบ —</option>${opts(ST.cmp,ST.sel)}</select></div></div>`;
 function provFlags(p){
   const out=[],i=yi();
   const a=alerts().find(x=>x.p.id===p.id); if(a) out.push(["red","ร้องเรียน +"+fmt(a.pct)+"% vs "+(ST.year-1)]);
@@ -244,21 +260,32 @@ function provFlags(p){
   if(topMM().some(q=>q.id===p.id)) out.push(["amber","Mismatch สูง 5 อันดับแรก"]);
   return `<div class="flags">${out.length?out.map(f=>`<span class="flag ${f[0]}">${f[0]==="red"?"⚠ ":"▲ "}${f[1]}</span>`).join(""):'<span class="flag ok">ไม่มีสัญญาณเตือน · '+ST.year+'</span>'}</div>`;
 }
+const cmpLegend=p=>{const q=cmpP();return q?`<div class="legend2"><span><i style="background:#4cc9ff"></i>${p.th}</span><span><i style="background:${CC}"></i>${q.th}</span></div>`:"";};
+function cmpTable(p,q){
+  const i=yi(),row=(l,f,hi)=>{const a=f(p),b=f(q),w=a==null||b==null?0:(a===b?0:((a>b)===(hi!==false)?1:2));
+    return `<div class="cr"><span class="cl">${l}</span><span class="cv ${w===1?"w":""}">${a==null?NOD:a.t}</span><span class="cv ${w===2?"w":""}">${b==null?NOD:b.t}</span></div>`;};
+  const mk=(v,t)=>v==null||isNaN(v)?null:{valueOf:()=>v,t:t(v)};
+  const rows=[["GPP (พันล้านบาท)",x=>mk(x.gpp[i],v=>fmt(v,0))],["ประชากร (ล้านคน)",x=>mk(x.pop[i]/1e6,v=>fmt(v,2))],["GPP ต่อหัว (บาท)",x=>mk(M.gpc.get(x),v=>fmt(v))],
+    ["ร้องเรียนต่อแสนคน",x=>mk(crate(x),v=>fmt(v,1)),false],["งบต่อหัว (บาท)",x=>mk(M.bpc.get(x),v=>fmt(v))],["Mismatch (0–100)",x=>mmAvg(x)==null?null:mk(mmAvg(x),v=>fmt(v,1)),false]];
+  return panel("เทียบ 2 จังหวัด · "+ST.year,`<div class="cmpt"><div class="cr ch"><span></span><span style="color:#4cc9ff">${p.th}</span><span style="color:${CC}">${q.th}</span></div>${rows.map(r=>row(r[0],r[1],r[2])).join("")}</div>`,REAL+"สศช. · 1111 · สำนักงบฯ · ตัวหนา = ค่าที่ดีกว่า","","fix");
+}
 function provLeft(withSelect){
   const p=byId[ST.sel],i=yi(),cc=comp(p),cp=comp(p,ST.year-1),cd=cc!=null&&cp?delta(cc,cp):null,m=M[ST.metric];
   const rk=[...P].filter(q=>m.get(q)!=null).sort((a,b)=>m.get(b)-m.get(a)).findIndex(q=>q.id===p.id)+1;
-  const g=money(p.gpp[i]),pp=popu(p.pop[i]);
+  const g=money(p.gpp[i]),pp=popu(p.pop[i]),q=withSelect?cmpP():null,qn=q?"vs "+q.th+" ":"";
+  const qg=q?money(q.gpp[i]):null,qp=q?popu(q.pop[i]):null,qc=q?comp(q):null,qm=q?M[ST.metric].get(q):null;
+  const rkOf=z=>[...P].filter(y=>m.get(y)!=null).sort((a,b)=>m.get(b)-m.get(a)).findIndex(y=>y.id===z.id)+1;
   const html=
    panel(withSelect?"เลือกจังหวัด":"จังหวัดที่เลือก · "+p.th,(withSelect?provSelect()+provFlags(p):"")+kpiHtml([
-     {l:"GPP จังหวัด",v:g[0],u:g[1],d:i>0?dTxt(p.gpp[i],p.gpp[i-1]):"",amb:i>0&&p.gpp[i]<p.gpp[i-1]},
-     {l:"ประชากร",v:pp[0],u:pp[1],d:i>0?dTxt(p.pop[i],p.pop[i-1]):""},
-     {l:"เรื่องร้องเรียน",v:cc==null?NOD:fmt(cc),u:cc==null?"":"เรื่อง",d:cd==null?"":dTxt(cc,cp),bad:cd>0&&ST.metric==="crate",alert:cd>0&&ST.metric==="crate"},
-     {l:"อันดับ · "+m.label,v:m.get(p)==null?"–":"#"+rk,u:"/ 77",d:m.get(p)==null?"":(m.get(p)>=d3.median(P,m.get)?"สูงกว่า":"ต่ำกว่า")+"ค่ากลาง"}]),REAL+"สศช. · 1111","","fix")+
+     {l:"GPP จังหวัด",v:g[0],u:g[1],d:i>0?dTxt(p.gpp[i],p.gpp[i-1]):"",amb:i>0&&p.gpp[i]<p.gpp[i-1],c:q?qn+qg[0]:""},
+     {l:"ประชากร",v:pp[0],u:pp[1],d:i>0?dTxt(p.pop[i],p.pop[i-1]):"",c:q?qn+qp[0]:""},
+     {l:"เรื่องร้องเรียน",v:cc==null?NOD:fmt(cc),u:cc==null?"":"เรื่อง",d:cd==null?"":dTxt(cc,cp),bad:cd>0&&ST.metric==="crate",alert:cd>0&&ST.metric==="crate",c:q?qn+(qc==null?NOD:fmt(qc)):""},
+     {l:"อันดับ · "+m.label,v:m.get(p)==null?"–":"#"+rk,u:"/ 77",d:m.get(p)==null?"":(m.get(p)>=d3.median(P,m.get)?"สูงกว่า":"ต่ำกว่า")+"ค่ากลาง",c:q?qn+(qm==null?NOD:"#"+rkOf(q)+" / 77"):""}]),REAL+"สศช. · 1111","","fix")+
    panel("GPP จังหวัด · พันล้านบาท",chart("line","0 0 320 170"),REAL+"สศช. GPP 2019–2023")+
-   panel("ร้องเรียนตามด้าน · "+ST.year,`<div class="row2"><svg id="donut" viewBox="0 0 120 120"></svg><div class="legend2" id="dl" style="flex-direction:column;gap:6px;margin:0"></div></div>`,REAL+"1111 · ด้าน 4–6 เท่านั้น");
+   (panel("ร้องเรียนตามด้าน · "+ST.year,`<div class="row2"><svg id="donut" viewBox="0 0 120 120"></svg><div class="legend2" id="dl" style="flex-direction:column;gap:6px;margin:0"></div></div>`,REAL+"1111 · ด้าน 4–6 เท่านั้น"));
   return html;
 }
-function provLeftDraw(){const p=byId[ST.sel];line("#line",[{c:"#4cc9ff",v:p.gpp}],{d:0});donut("#donut","#dl",ST.year<2020?[0,0,0]:domComp([p],ST.year));}
+function provLeftDraw(){const p=byId[ST.sel],q=cmpP();line("#line",[{c:"#4cc9ff",v:p.gpp}].concat(q?[{c:CC,v:q.gpp,dash:"5 3"}]:[]),{d:0});donut("#donut","#dl",ST.year<2020?[0,0,0]:domComp([p],ST.year));}
 function alertPanel(){
   const emp=t=>'<div class="empty">'+t+"</div>";
   if(ST.metric==="crate"){const al=alerts();
@@ -291,15 +318,18 @@ function tab1(){
   scatter("#sc",p=>M.gpc.get(p),p=>ST.year<2020?null:crate(p),{log:true,xl:"GPP ต่อหัว (บาท, log)",yl:"ร้องเรียน/แสนคน",xf:d=>d3.format("~s")(d),h:200,alert:ST.metric==="crate"});
 }
 function tab2(){
-  const p=byId[ST.sel];
+  const p=byId[ST.sel],q=cmpP();
   $("#L").innerHTML=provLeft(true); provLeftDraw();
+  const lg=q?`<div class="legend2"><span><i style="background:#4cc9ff"></i>${p.th}</span><span><i style="background:${CC}"></i>${q.th}</span></div>`:"";
   $("#R").innerHTML=
-   panel("เทียบกับจังหวัดอื่น (เปอร์เซ็นไทล์) · "+p.th,chart("radar","0 0 320 190"),REAL+"สศช. · 1111 · สำนักงบประมาณ · เส้นประ = ค่ากลาง · ไม่มีข้อมูล = 0")+
-   panel("งบประมาณรายด้าน · พันล้านบาท · "+ST.year,chart("bars","0 0 320 150"),(hasB()?REAL:PART)+"สำนักงบประมาณ FY2566 · จัดกลุ่มกระทรวง→6 ด้าน · นับตามที่ตั้งหน่วยงาน")+
-   panel("เรื่องร้องเรียน 2020–2023",chart("area","0 0 320 130"),REAL+"1111 · ด้าน 4–6 (ปีปฏิทิน)","alert");
-  radar("#radar",p);
-  hbars("#bars",Object.entries(p.dom[ST.year]).map(([k,v])=>[SH[k],v.b,"#3d8bff"]),{h:150,lw:104,d:1,na:"ไม่มีข้อมูลงบปี "+ST.year+" (มีเฉพาะ 2023)"});
-  area("#area",CY.map(y=>comp(p,y)??0));
+   panel("เทียบกับจังหวัดอื่น (เปอร์เซ็นไทล์) · "+p.th+(q?" vs "+q.th:""),chart("radar","0 0 320 190")+lg,REAL+"สศช. · 1111 · สำนักงบประมาณ · เส้นประ = ค่ากลาง · ไม่มีข้อมูล = 0")+
+   panel("งบประมาณรายด้าน · พันล้านบาท · "+ST.year,chart("bars","0 0 320 150")+lg,(hasB()?REAL:PART)+"สำนักงบประมาณ FY2566 · จัดกลุ่มกระทรวง→6 ด้าน · นับตามที่ตั้งหน่วยงาน")+
+   panel("เรื่องร้องเรียน 2020–2023",chart("area","0 0 320 130")+lg,REAL+"1111 · ด้าน 4–6 (ปีปฏิทิน)","alert");
+  radar("#radar",p,q);
+  const na="ไม่มีข้อมูลงบปี "+ST.year+" (มีเฉพาะ 2023)";
+  if(q) gbars("#bars",Object.keys(p.dom[ST.year]).map(k=>[SH[k],p.dom[ST.year][k].b,q.dom[ST.year][k].b]),{h:150,na});
+  else hbars("#bars",Object.entries(p.dom[ST.year]).map(([k,v])=>[SH[k],v.b,"#3d8bff"]),{h:150,lw:104,d:1,na});
+  area("#area",CY.map(y=>comp(p,y)??0),q?CY.map(y=>comp(q,y)??0):null);
 }
 function tab3(){
   const p=ST.sel?byId[ST.sel]:null, ok=hasB(), avg=ok?d3.mean(P,mmAvg):null, hi=ok?P.filter(q=>mmAvg(q)>=20):[];
@@ -319,9 +349,10 @@ function tab3(){
   const sorted=[...P].filter(q=>mmAvg(q)!=null).sort((a,b)=>mmAvg(b)-mmAvg(a)), list=sorted.slice(0,5);
   $("#R").innerHTML=
    panel("▲ Top 5 · Mismatch สูงสุด",list.length?rankList(list,mmAvg,q=>fmt(mmAvg(q),1),mmAvg(list[0])||1,"amber"):'<div class="empty">'+na+"</div>",M.mm.ref(),"warn","fix")+
-   panel("Heatmap · 7 จังหวัดที่ไม่สอดคล้องสูงสุด × 6 ด้าน",chart("heat","0 0 320 190"),"ตัวเลข = คะแนน Mismatch 0–100")+
+   panel(p&&ok?"Heatmap · "+p.th+" เทียบเฉลี่ยประเทศ × 6 ด้าน":"Heatmap · 7 จังหวัดที่ไม่สอดคล้องสูงสุด × 6 ด้าน",chart("heat","0 0 320 190"),"ตัวเลข = คะแนน Mismatch 0–100")+
    panel("งบประมาณต่อหัว vs ร้องเรียนต่อแสนคน",chart("sc","0 0 320 190"),REAL+"ขนาดวง = ประชากร · เหลือง = Mismatch สูง 5 อันดับ");
-  if(sorted.length) heat("#heat",sorted.slice(0,7)); else d3.select("#heat").append("text").attr("x",160).attr("y",95).attr("text-anchor","middle").attr("class","axis").text(NOD);
+  if(p&&ok){const av={th:"เฉลี่ยประเทศ",dom:{[ST.year]:Object.fromEntries([1,2,3,4,5,6].map(d=>[d,{mm:d3.mean(P,z=>z.dom[ST.year][d].mm)}]))}};heat("#heat",[p,av]);}
+  else if(sorted.length) heat("#heat",sorted.slice(0,7)); else d3.select("#heat").append("text").attr("x",160).attr("y",95).attr("text-anchor","middle").attr("class","axis").text(NOD);
   scatter("#sc",p=>M.bpc.get(p),p=>ST.year<2020?null:crate(p),{xl:"งบประมาณต่อหัว (บาท, log)",yl:"ร้องเรียน/แสนคน",log:true,xf:d=>d3.format("~s")(d),h:190,alert:true,ac:"rgba(255,176,32,.75)",as:"#ffb020"});
 }
 let lastTab=null;
@@ -342,12 +373,16 @@ function render(){
   ({1:tab1,2:tab2,3:tab3})[ST.tab](); bindRk(); drawMap(); countUp();
   if(switched&&!RM){["#L","#R"].forEach(q=>{const el=$(q);el.classList.remove("enter");void el.offsetWidth;el.classList.add("enter");});}
   if(ST.sel!==lastSel){lastSel=ST.sel;fly();}
-  const ps=$("#ps"); if(ps) ps.onchange=()=>{ST.sel=ps.value;render();};
+  const ps=$("#ps"); if(ps) ps.onchange=()=>{ST.sel=ps.value;if(ST.cmp===ST.sel)ST.cmp=null;render();};
+  const cs=$("#cs"); if(cs) cs.onchange=()=>{ST.cmp=cs.value||null;render();};
 }
 function pick(id,fromRank){ if(ST.tab===2) ST.sel=id; else ST.sel=(id===ST.sel&&!fromRank)?null:id; render(); }
 $("#yr").innerHTML=Y.map(y=>`<option value="${y}">${y}</option>`).join(""); $("#yr").value=ST.year;
 $("#yr").onchange=e=>{ST.year=+e.target.value;render();};
 $("#mtabs").addEventListener("change",e=>{if(e.target.id==="msel"){ST.metric=e.target.value;render();}});
+$("#plist").innerHTML=[...P].sort((a,b)=>a.th.localeCompare(b.th,"th")).map(p=>`<option value="${p.th}">${p.en}</option>`).join("");
+$("#psearch").addEventListener("change",e=>{const v=e.target.value.trim().toLowerCase(),p=P.find(q=>q.th===e.target.value.trim()||q.en.toLowerCase()===v)||P.find(q=>q.th.includes(e.target.value.trim())&&v);
+  if(p){e.target.value="";e.target.blur();pick(p.id,true);}});
 $("#reset").onclick=()=>{ST.sel=null;render();};
 document.querySelectorAll(".pill").forEach(b=>b.onclick=()=>{ST.tab=+b.dataset.t;render();});
 /* fit the 1600x900 stage into the window (no scrolling); narrow screens fall back to a normal scrolling page */
