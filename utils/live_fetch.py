@@ -46,6 +46,7 @@ def fetch_complaints() -> pd.DataFrame:
     prov = pd.read_csv(C.DATA_DIR / "dim_province.csv").set_index("Province_Name_TH").Province_ID
     df["Province_ID"] = df["province"].map(prov)
     df = df.dropna(subset=["Province_ID"])  # drops 'ไม่ระบุจังหวัด' / 'ต่างประเทศ'
+    df["Problem_Type"] = df["Problem_Type"].astype(str).str.strip()
     df["Year"] = pd.to_numeric(df["work_year"], errors="coerce")
     df["n"] = pd.to_numeric(df["Total"], errors="coerce").fillna(0)
     out = (df[df.Year.isin(C.REAL_COMPLAINT_YEARS)].groupby(["Year", "Province_ID", "Problem_Type"], as_index=False).n.sum()
