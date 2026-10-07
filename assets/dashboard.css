@@ -1,9 +1,9 @@
 /* Layout: fixed 1600x900 stage scaled to the browser window (one screen, no scrolling).
    Header row = brand + 3 original tabs + year filter. Body = 3 columns, centre map ~ 52% of width.
-   Red is reserved for complaint alerts and the synthetic-data badge. */
+   Red is reserved for complaint alerts; amber marks economy / budget / mismatch alerts. */
 :root{
   --ink:#04060b; --panel:rgba(13,22,42,.66); --line:rgba(110,150,255,.16);
-  --white:#eef3ff; --mute:#8a98b8; --blue:#3d8bff; --cyan:#4cc9ff; --red:#ff3b4e; --grid:rgba(140,170,255,.10);
+  --white:#eef3ff; --mute:#8a98b8; --blue:#3d8bff; --cyan:#4cc9ff; --red:#ff3b4e; --amber:#ffb020; --grid:rgba(140,170,255,.10);
   --sans:"IBM Plex Sans Thai",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
   color-scheme:dark;
 }
@@ -139,3 +139,19 @@ svg text{font-family:var(--mono)}
 .mbox td,.mbox th{text-align:left;padding:7px 8px;border-bottom:1px solid var(--grid);vertical-align:top}
 .mbox th{color:var(--mute);font-weight:500;font-size:10.5px}
 .mbox a{color:var(--cyan);text-decoration:none}.mbox a:hover{text-decoration:underline}
+
+/* amber = non-complaint alerts (GPP drop, low budget per capita, mismatch); red stays complaint-only */
+.dot.amber{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.pt.warn{color:#ffd27a}
+.badge.na{color:var(--mute);border-color:rgba(138,152,184,.45);background:rgba(138,152,184,.08)}
+.badge.part{color:var(--amber);border-color:rgba(255,176,32,.5);background:rgba(255,176,32,.08)}
+.kpi.warn{border-color:rgba(255,176,32,.4);box-shadow:0 0 16px rgba(255,176,32,.12)}
+.kpi .d.warn{color:var(--amber)}
+.hot.amber .pulse{stroke:var(--amber)}.hot.amber .core{fill:var(--amber);filter:drop-shadow(0 0 5px var(--amber))}
+.rk.wr .bar i{background:linear-gradient(90deg,#ffd27a,var(--amber))}.rk.wr .val{color:#ffd27a}
+.banner{color:#ffd27a;border-color:rgba(255,176,32,.4);background:rgba(255,176,32,.07)}
+.flags{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
+.flag{font:500 10px var(--mono);padding:2px 8px;border-radius:999px;border:1px solid}
+.flag.red{color:#ff9aa4;border-color:rgba(255,59,78,.5);background:rgba(255,59,78,.08)}
+.flag.amber{color:#ffd27a;border-color:rgba(255,176,32,.5);background:rgba(255,176,32,.08)}
+.flag.ok{color:var(--mute);border-color:var(--line)}

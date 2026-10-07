@@ -38,18 +38,22 @@ def compute_mismatch(df: pd.DataFrame, weights: dict | None = None) -> pd.DataFr
     out["gap_outcome"] = w["w1"] * np.maximum(0, out.B - out.O)
     out["gap_complaint"] = w["w2"] * (out.B * out.C) / 100
     out["gap_gpp"] = w["w3"] * np.maximum(0, out.B - out.G)
-    # Real complaint data is missing for some domains/years (never filled with fake values): the score is then
-    # computed from the available terms and rescaled by their weights so it stays on the same 0-100 scale.
-    avail_w = (w["w1"] + w["w3"]) + w["w2"] * out["C"].notna()
+    # Only REAL data is used: when a term's input is missing (no outcome open data yet, complaints only for
+    # domains 4-6) the score is computed from the available terms and rescaled by their weights (0-100).
+    # Without a real budget (all years except FY2023) the score is NaN.
+    avail_w = w["w3"] + w["w2"] * out["C"].notna() + w["w1"] * out["O"].notna()
     out["Complaint_Missing"] = out["C"].isna()
-    out["Mismatch_Score"] = out[["gap_outcome", "gap_complaint", "gap_gpp"]].sum(axis=1, skipna=True) / avail_w * sum(w.values())
+    out["Outcome_Missing"] = out["O"].isna()
+    score = out[["gap_outcome", "gap_complaint", "gap_gpp"]].sum(axis=1, skipna=True) / avail_w * sum(w.values())
+    out["Mismatch_Score"] = score.where(out["B"].notna())
     return out
 
 
 def top_mismatch(scored: pd.DataFrame, n: int = 10) -> pd.DataFrame:
     """Top-n province x domain pairs with the dominant reason in Thai."""
-    top = scored.nlargest(n, "Mismatch_Score").copy()
-    comp = top[["gap_outcome", "gap_complaint", "gap_gpp"]]
+    top = scored.dropna(subset=["Mismatch_Score"]).nlargest(n, "Mismatch_Score").copy()
+    comp = top[["gap_outcome", "gap_complaint", "gap_gpp"]].fillna(-1)
     top["Reason_TH"] = comp.idxmax(axis=1).map(REASON_TH)
-    top.loc[top.Complaint_Missing, "Reason_TH"] += " (ไม่มีข้อมูลร้องเรียนจริง คำนวณจาก 2 องค์ประกอบ)"
+    note = top.Complaint_Missing.map({True: "ไม่มีข้อมูลร้องเรียน", False: ""})
+    top["Reason_TH"] += note.map(lambda s: f" ({s})" if s else "")
     return top

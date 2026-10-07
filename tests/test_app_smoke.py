@@ -29,11 +29,14 @@ def test_payload_shape_and_real_values():
     assert "2019" not in kk["cdy"]  # no real complaint data before 2020 -> never filled in
     assert set(kk["dom"]["2023"]) == {"1", "2", "3", "4", "5", "6"}
     assert p["flags"]["gpp"] and p["flags"]["complaints"]
-    assert not p["flags"]["budget"]  # budget is still synthetic -> UI must show the synthetic badge
+    assert p["flags"]["budget"] and not p["flags"]["outcome"]  # real FY2566 budget; no real outcome data yet
+    assert kk["b"][:4] == [None] * 4 and kk["b"][4] > 0  # budget only exists for 2023, never filled in
+    assert kk["dom"]["2021"]["1"]["b"] is None and kk["dom"]["2023"]["1"]["o"] is None
+    assert p["meta"]["budget_years"] == [2023]
     assert all(s["links"] for s in p["sources"])
 
 
 def test_ui_has_per_chart_data_references():
     js = (ASSETS / "dashboard.js").read_text(encoding="utf-8")
     assert js.count("panel(") >= 15
-    assert js.count('class="ref"') >= 1 and "REAL+" in js and "SYN+" in js
+    assert js.count('class="ref"') >= 1 and "REAL+" in js and "SYN" not in js  # no synthetic data left

@@ -13,9 +13,6 @@ TABLES = ["dim_province", "fact_province_domain", "fact_province_year",
 @lru_cache(maxsize=1)
 def load_tables() -> dict:
     if not all((C.PROCESSED_DIR / f"{t}.parquet").exists() for t in TABLES):
-        if not (C.RAW_DIR / "budget_province_domain.csv").exists():
-            from utils import sample_data
-            sample_data.generate()
         pipeline.build(verbose=False)
     return {t: pd.read_parquet(C.PROCESSED_DIR / f"{t}.parquet") for t in TABLES}
 

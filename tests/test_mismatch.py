@@ -56,3 +56,13 @@ def test_top_mismatch_reason():
     top = top_mismatch(compute_mismatch(_frame()), n=1)
     assert top.iloc[0].Province_ID == "A"
     assert isinstance(top.iloc[0].Reason_TH, str) and top.iloc[0].Reason_TH
+
+
+def test_missing_terms_rescaled_and_missing_budget_nan():
+    f = _frame().assign(Outcome_Raw_Value=np.nan)  # no real outcome -> score from complaints + GPP terms only
+    s = compute_mismatch(f).set_index("Province_ID")
+    assert s.Mismatch_Score.between(0, 100).all()
+    assert s.loc["A", "Mismatch_Score"] == pytest.approx(100.0)  # (0.4*100 + 0.2*100) / 0.6 rescaled
+    nob = compute_mismatch(_frame().assign(Budget_per_capita=np.nan))
+    assert nob.Mismatch_Score.isna().all()  # no real budget -> no score
+    assert top_mismatch(nob).empty

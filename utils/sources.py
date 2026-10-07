@@ -1,19 +1,19 @@
-"""Data-source registry used for the reference line under every chart.
+"""Data-source registry used for the reference line under every chart and the sources modal.
 
-A dataset counts as REAL only when its key is listed in data/raw/real_sources.json
-(written by whoever converts the real open data into data/raw/*.csv). Default: synthetic.
+A dataset counts as REAL when its snapshot file exists in data/raw_real (see REAL_FILES). Datasets without open
+data stay listed as "ยังไม่มี open data" - nothing is synthesised.
 """
 import config as C
 
 SOURCES = {
-    "budget_nat": ("งบประมาณรายด้าน (ประเทศ)", [("GovSpend (DGA)", "https://govspend.data.go.th/"), ("สำนักงบประมาณ", "https://www.bb.go.th/")]),
-    "gdp": ("GDP ประเทศ (= ผลรวม GPP 77 จังหวัด)", [("สศช. ผลิตภัณฑ์ภาคและจังหวัด 1995-2024", "https://www.nesdc.go.th/info/gross-regional-and-provincial-product/")]),
+    "budget_nat": ("งบประมาณรายด้าน (ประเทศ = ผลรวม 77 จังหวัด, FY2566)", [("สำนักงบประมาณ (data.go.th)", "https://data.go.th/dataset/dataset_11_03_2566")]),
+    "gdp": ("GDP (= ผลรวม GPP 77 จังหวัด)", [("สศช. ผลิตภัณฑ์ภาคและจังหวัด 1995-2024", "https://www.nesdc.go.th/info/gross-regional-and-provincial-product/")]),
     "outcome_nat": ("ผลลัพธ์/KPIs (ประเทศ)", [("eMENSCR (สศช.)", "https://emenscr.nesdc.go.th/")]),
     "complaints_nat": ("เรื่องร้องเรียน (ประเทศ)", [("ศูนย์บริการประชาชน 1111", "https://www.1111.go.th/")]),
-    "budget_prov": ("งบประมาณรายจังหวัด/ด้าน", [("กรมบัญชีกลาง (CGD)", "https://www.cgd.go.th/"), ("OSMCE มหาดไทย", "http://www.osmce.mointerior.go.th/")]),
+    "budget_prov": ("งบประมาณจัดสรรรายจังหวัด FY2566 (จัดกลุ่มเป็น 6 ด้านตามกระทรวง)", [("สำนักงบประมาณ · รายการจัดสรรระดับจังหวัด 2566", "https://data.go.th/dataset/dataset_11_03_2566")]),
     "gpp": ("GPP รายจังหวัด (ราคาประจำปี)", [("สศช. ผลิตภัณฑ์ภาคและจังหวัด", "https://www.nesdc.go.th/info/gross-regional-and-provincial-product/")]),
     "outcome_prov": ("ผลลัพธ์/HAI รายจังหวัด", [("สศช. HAI Index", "https://www.nesdc.go.th/"), ("PBIC มหาดไทย", "http://www.pbic.mointerior.go.th/")]),
-    "complaints_prov": ("เรื่องร้องเรียนรายจังหวัด", [("ศูนย์ดำรงธรรม มท.", "https://www.damrongdham.moe.go.th/"), ("1111", "https://www.1111.go.th/")]),
+    "complaints_prov": ("เรื่องร้องเรียนรายจังหวัด (1111)", [("data.go.th · ศูนย์บริการประชาชน 1111", "https://data.go.th/")]),
     "population": ("ประชากรรายจังหวัด (ประมาณการ สศช.)", [("สศช. ผลิตภัณฑ์ภาคและจังหวัด", "https://www.nesdc.go.th/info/gross-regional-and-provincial-product/")]),
     "boundaries": ("ขอบเขตจังหวัด (GeoJSON)", [("chingchai/OpenGISData-Thailand", "https://github.com/chingchai/OpenGISData-Thailand")]),
 }

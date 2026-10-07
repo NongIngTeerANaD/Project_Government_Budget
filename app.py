@@ -46,7 +46,7 @@ if __name__ == "__main__":
     if args.offline:
         os.environ["GOVBUDGET_OFFLINE"] = "1"
     from utils import live_fetch, pipeline
-    if live_fetch.refresh() == "live":  # new data downloaded -> rebuild processed tables
+    if live_fetch.refresh_all():  # new data downloaded -> rebuild processed tables
         pipeline.build(verbose=False)
     print(f"Open http://127.0.0.1:{args.port}")
     app.run(debug=args.debug, host="127.0.0.1", port=args.port)

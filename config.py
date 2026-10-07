@@ -3,8 +3,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
-RAW_DIR = DATA_DIR / "raw"
-REAL_DIR = DATA_DIR / "raw_real"  # real open-data extracts; take precedence over synthetic data/raw
+REAL_DIR = DATA_DIR / "raw_real"  # committed snapshots of real open data (the app also fetches fresh copies at start-up)
 PROCESSED_DIR = DATA_DIR / "processed"
 
 FISCAL_YEARS = [2019, 2020, 2021, 2022, 2023]  # CE (BE 2562-2566)
@@ -37,14 +36,6 @@ COMPLAINT_RATE_PER = 100_000  # BRD section 7 risk 4
 
 
 GEOJSON_PATH = DATA_DIR / "geo" / "thailand_provinces.geojson"
-SAMPLE_FLAG = RAW_DIR / "SAMPLE_DATA.flag"
-
-
-def is_sample_data() -> bool:
-    """True while the dashboard runs on synthetic data (flag written by utils.sample_data)."""
-    return SAMPLE_FLAG.exists()
-
-
 # Real 1111 complaint problem types -> 6 standard domains (decision agreed with the project owner).
 # Domains 1-3 (education / health / infrastructure) have NO matching 1111 category -> no real data (left empty, never filled).
 COMPLAINT_TYPE_TO_DOMAIN = {
@@ -58,3 +49,23 @@ COMPLAINT_TYPE_TO_DOMAIN = {
 }
 REAL_COMPLAINT_YEARS = [2020, 2021, 2022, 2023]
 REAL_COMPLAINT_DOMAINS = [4, 5, 6]
+
+
+# Real budget (Bureau of the Budget, data.go.th "รายการจัดสรรงบประมาณระดับจังหวัด") -> 6 standard domains.
+# ASSUMPTION (project decision, documented in data/raw_real/SOURCES.md): the open data lists allocations by ministry,
+# so each ministry is mapped to one domain; Dept. of Public Works and Town & Country Planning (under Interior) -> domain 3.
+BUDGET_MIN_TO_DOMAIN = {
+    "กระทรวงศึกษาธิการ": 1, "กระทรวงการอุดมศึกษา วิทยาศาสตร์ วิจัยและนวัตกรรม": 1,
+    "กระทรวงสาธารณสุข": 2, "สภากาชาดไทย": 2,
+    "กระทรวงคมนาคม": 3, "กระทรวงพลังงาน": 3,
+    "กระทรวงเกษตรและสหกรณ์": 4, "กระทรวงทรัพยากรธรรมชาติและสิ่งแวดล้อม": 4,
+    "กระทรวงกลาโหม": 5, "กระทรวงยุติธรรม": 5, "กระทรวงมหาดไทย": 5, "สำนักนายกรัฐมนตรี": 5, "กระทรวงการคลัง": 5,
+    "กระทรวงการต่างประเทศ": 5, "หน่วยงานของศาล": 5, "หน่วยงานขององค์กรอิสระและองค์กรอัยการ": 5, "หน่วยงานของรัฐสภา": 5,
+    "ส่วนราชการในพระองค์": 5, "จังหวัดและกลุ่มจังหวัด": 5, "องค์กรปกครองส่วนท้องถิ่น": 5, "หน่วยงานอื่นของรัฐ": 5,
+    "ส่วนราชการไม่สังกัดสำนักนายกรัฐมนตรี กระทรวง หรือทบวง และหน่วยงานภายใต้การควบคุมดูแลของนายกรัฐมนตรี": 5,
+    "กระทรวงพาณิชย์": 6, "กระทรวงอุตสาหกรรม": 6, "กระทรวงการท่องเที่ยวและกีฬา": 6,
+    "กระทรวงการพัฒนาสังคมและความมั่นคงของมนุษย์": 6, "กระทรวงแรงงาน": 6, "กระทรวงวัฒนธรรม": 6,
+    "กระทรวงดิจิทัลเพื่อเศรษฐกิจและสังคม": 6, "ทุนหมุนเวียน": 6, "รัฐวิสาหกิจ": 6,
+}
+BUDGET_PUBLIC_WORKS_KEYWORD = "โยธาธิการ"  # agency name containing this under กระทรวงมหาดไทย -> domain 3
+REAL_BUDGET_YEARS = [2023]  # the open data on data.go.th currently covers FY2566 (2023) only
