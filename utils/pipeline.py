@@ -47,7 +47,8 @@ def _complaints(grid: pd.DataFrame) -> pd.DataFrame:
     exists for REAL_COMPLAINT_YEARS x REAL_COMPLAINT_DOMAINS; everything else stays NaN (no fabricated values).
     Absent rows inside that window mean 0 reported complaints.
     """
-    real = C.REAL_DIR / "complaints_1111_province_type.csv"
+    from utils.live_fetch import complaints_path
+    real = complaints_path()
     if not real.exists():
         return _read("complaints_province_domain.csv")[KEYS + ["Complaint_Count"]]
     r = pd.read_csv(real)

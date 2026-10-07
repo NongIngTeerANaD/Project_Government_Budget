@@ -9,3 +9,6 @@ data/raw/*
 
 data/processed/*.parquet
 !data/processed/.gitkeep
+
+# live open-data cache (regenerated at app start)
+data/live_cache/

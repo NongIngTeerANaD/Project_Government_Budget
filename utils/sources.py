@@ -46,5 +46,11 @@ def reference(*keys: str) -> html.Div:
         for i, (n, u) in enumerate(links):
             src += [", "] if i else []
             src.append(html.A(n, href=u, target="_blank", rel="noopener noreferrer"))
-        items.append(html.Span([html.B(label + ": "), *src, " ", badge], className="ref-item"))
+        extra = ""
+        if k in ("complaints_prov", "complaints_nat") and is_real:
+            from utils.live_fetch import fetched_date
+            d = fetched_date()
+            extra = f" · ดึงสดจาก data.go.th เมื่อ {d}" if d else " · สำเนาที่บันทึกไว้ (data.go.th, 2026-10-06)"
+            extra += " · ครอบคลุมปี 2020–2023 ด้าน 4–6"
+        items.append(html.Span([html.B(label + ": "), *src, " ", badge, extra], className="ref-item"))
     return html.Div([html.Span("แหล่งข้อมูล: ", className="ref-title"), *items], className="data-ref")

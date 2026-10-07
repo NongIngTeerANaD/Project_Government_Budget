@@ -57,6 +57,12 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Run the dashboard")
     ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8060)), help="default 8060 (8050 is often taken)")
     ap.add_argument("--debug", action="store_true")
+    ap.add_argument("--offline", action="store_true", help="skip live open-data fetch")
     args = ap.parse_args()
+    if args.offline:
+        os.environ["GOVBUDGET_OFFLINE"] = "1"
+    from utils import live_fetch, pipeline
+    if live_fetch.refresh() == "live":  # new data downloaded -> rebuild processed tables
+        pipeline.build(verbose=False)
     print(f"Open http://127.0.0.1:{args.port}")
     app.run(debug=args.debug, host="127.0.0.1", port=args.port)
