@@ -1,55 +1,39 @@
-import config as C
-from callbacks import tab1, tab2, tab3
+import json
+from pathlib import Path
+
 import app as app_module
+import config as C
+from utils.payload import build_payload
+
+ASSETS = Path(__file__).resolve().parents[1] / "assets"
 
 
-def test_http_endpoints():
+def test_http_endpoints_and_assets():
     c = app_module.server.test_client()
     assert c.get("/").status_code == 200
-    assert c.get("/_dash-layout").status_code == 200
-    deps = c.get("/_dash-dependencies")
-    assert deps.status_code == 200 and len(deps.get_json()) >= 5
+    layout = c.get("/_dash-layout")
+    assert layout.status_code == 200 and "payload" in layout.get_data(as_text=True)
+    for f in ("d3.min.js", "dashboard.js", "dashboard.css"):
+        assert (ASSETS / f).stat().st_size > 1000
+        assert c.get(f"/assets/{f}").status_code == 200
+    assert len(c.get("/_dash-dependencies").get_json()) >= 1
 
 
-def test_tab_layouts_build():
-    for build in app_module.TABS.values():
-        assert build() is not None
+def test_payload_shape_and_real_values():
+    p = build_payload()
+    json.dumps(p, ensure_ascii=False)  # must be JSON-serialisable (no NaN objects)
+    assert len(p["prov"]) == 77 and p["years"] == list(C.FISCAL_YEARS)
+    assert len(p["geo"]["features"]) == 77
+    kk = next(x for x in p["prov"] if x["th"] == "ขอนแก่น")
+    assert kk["cdy"]["2023"] == {"4": 9, "5": 108, "6": 255}
+    assert "2019" not in kk["cdy"]  # no real complaint data before 2020 -> never filled in
+    assert set(kk["dom"]["2023"]) == {"1", "2", "3", "4", "5", "6"}
+    assert p["flags"]["gpp"] and p["flags"]["complaints"]
+    assert not p["flags"]["budget"]  # budget is still synthetic -> UI must show the synthetic badge
+    assert all(s["links"] for s in p["sources"])
 
 
-def test_tab1_callbacks():
-    k = tab1.kpis(2023, C.DOMAIN_IDS)
-    assert len(k) == 4
-    figs = tab1.charts(C.DOMAIN_IDS)
-    assert len(figs) == 4 and all(len(f.data) > 0 for f in figs)
-    assert len(tab1.charts([])) == 4  # empty selection handled
-
-
-def test_tab2_callbacks_all_and_province():
-    for prov in ("ALL", "TH-40"):
-        out = tab2.render(2022, [1, 2, 3], prov, "Budget_total")
-        caption, *figs, data, cols, style = out
-        assert len(figs) == 5 and len(data) == 77 and len(cols) == 9
-        assert bool(style) == (prov != "ALL")
-    assert tab2.render(2022, [], "ALL", "Budget_total")[6] == []
-
-
-def test_tab2_cross_filter_selection():
-    click = {"points": [{"location": "TH-40"}]}
-    import dash
-    # simulate the map being the trigger
-    from dash._callback_context import context_value
-    from dash._utils import AttributeDict
-    token = context_value.set(AttributeDict(triggered_inputs=[{"prop_id": "g2-map.clickData"}], inputs_list=[], states_list=[], outputs_list=[]))
-    try:
-        assert tab2.select_province(click, None, "ALL") == "TH-40"
-        assert tab2.select_province(click, None, "TH-40") == "ALL"  # toggle off
-    finally:
-        context_value.reset(token)
-
-
-def test_tab3_callbacks():
-    scatter, bubble, gpp, corr, heat, data, cols = tab3.render(2023, C.DOMAIN_IDS, "TH-40", "Region")
-    assert len(data) == 10 and data[0]["Mismatch"] >= data[-1]["Mismatch"]
-    assert all(r["Reason_TH"] for r in data)
-    assert len(tab3.render(2023, [2], "ALL", "Domain_ID")[5]) == 10
-    assert tab3.render(2023, [], "ALL", "Region")[5] == []
+def test_ui_has_per_chart_data_references():
+    js = (ASSETS / "dashboard.js").read_text(encoding="utf-8")
+    assert js.count("panel(") >= 15
+    assert js.count('class="ref"') >= 1 and "REAL+" in js and "SYN+" in js

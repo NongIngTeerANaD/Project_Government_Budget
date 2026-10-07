@@ -4,7 +4,6 @@ A dataset counts as REAL only when its key is listed in data/raw/real_sources.js
 (written by whoever converts the real open data into data/raw/*.csv). Default: synthetic.
 """
 import config as C
-from dash import html
 
 SOURCES = {
     "budget_nat": ("งบประมาณรายด้าน (ประเทศ)", [("GovSpend (DGA)", "https://govspend.data.go.th/"), ("สำนักงบประมาณ", "https://www.bb.go.th/")]),
@@ -31,26 +30,3 @@ REAL_FILES = {
 
 def real_keys() -> set:
     return {k for k, files in REAL_FILES.items() if all((C.REAL_DIR / f).exists() for f in files)}
-
-
-def reference(*keys: str) -> html.Div:
-    """Small 'data reference' footer: dataset, source links and real/synthetic status."""
-    real = real_keys()
-    items = []
-    for k in keys:
-        label, links = SOURCES[k]
-        is_real = k in real or k == "boundaries"
-        badge = html.Span("ข้อมูลจริง" if is_real else "ข้อมูลสังเคราะห์ (ยังไม่ใช่ข้อมูลจริง)",
-                          className="ref-badge " + ("real" if is_real else "synthetic"))
-        src = []
-        for i, (n, u) in enumerate(links):
-            src += [", "] if i else []
-            src.append(html.A(n, href=u, target="_blank", rel="noopener noreferrer"))
-        extra = ""
-        if k in ("complaints_prov", "complaints_nat") and is_real:
-            from utils.live_fetch import fetched_date
-            d = fetched_date()
-            extra = f" · ดึงสดจาก data.go.th เมื่อ {d}" if d else " · สำเนาที่บันทึกไว้ (data.go.th, 2026-10-06)"
-            extra += " · ครอบคลุมปี 2020–2023 ด้าน 4–6"
-        items.append(html.Span([html.B(label + ": "), *src, " ", badge, extra], className="ref-item"))
-    return html.Div([html.Span("แหล่งข้อมูล: ", className="ref-title"), *items], className="data-ref")

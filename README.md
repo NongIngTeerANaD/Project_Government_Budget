@@ -1,6 +1,6 @@
 # Thailand Government Budget Analytics Dashboard
 
-แดชบอร์ดเชิงโต้ตอบ (Plotly Dash) สำหรับวิเคราะห์ความสัมพันธ์ระหว่าง **งบประมาณแผ่นดิน – GDP/GPP – ผลสัมฤทธิ์ (Outcomes) – ข้อร้องเรียนของประชาชน** ระดับประเทศและ 77 จังหวัด ช่วง **ปีงบประมาณ 2019–2023 (พ.ศ. 2562–2566)**
+แดชบอร์ดเชิงโต้ตอบ (Dash + d3) สำหรับวิเคราะห์ความสัมพันธ์ระหว่าง **งบประมาณแผ่นดิน – GDP/GPP – ผลสัมฤทธิ์ (Outcomes) – ข้อร้องเรียนของประชาชน** ระดับประเทศและ 77 จังหวัด ช่วง **ปีงบประมาณ 2019–2023 (พ.ศ. 2562–2566)**
 
 > สถานะความคืบหน้าดูที่ [`PROJECT_STATUS.md`](PROJECT_STATUS.md)
 
@@ -77,17 +77,22 @@ Mismatch = 0.4 * max(0, B - O) + 0.4 * (B * C) + 0.2 * max(0, B - G)
 
 ## สถาปัตยกรรมและ Tech Stack
 
-Python 3.10+ · Plotly Dash + Dash Bootstrap Components · Pandas/Polars/DuckDB · Plotly Express/Graph Objects · Data layer: DuckDB/Parquet
+Python 3.10+ · Dash (เซิร์ฟเวอร์ + ส่งข้อมูล) · Pandas/DuckDB/Parquet (data layer) · d3.js v7 (วาดแผนที่/กราฟฝั่งเบราว์เซอร์ ฝังไว้ใน `assets/d3.min.js` ใช้ออฟไลน์ได้)
 
-โครงสร้างโค้ดที่วางแผน:
+โครงสร้างโค้ดปัจจุบัน:
 
 ```
-app.py
-layouts/        # tab1_national.py, tab2_provincial.py, tab3_mismatch.py, filters.py
-callbacks/      # cross-filtering และ callbacks ต่อ tab
-utils/mismatch.py
-data/           # raw / processed (parquet)
+app.py                  # Dash: เสิร์ฟหน้า + ส่ง payload ให้ assets/dashboard.js
+assets/dashboard.js     # UI: 3 แท็บ, แผนที่ซูมได้, กราฟ, แอนิเมชัน
+assets/dashboard.css    # ธีมมืด, เวทีขนาดคงที่ 1600x900 ย่อ/ขยายพอดีหน้าจอ
+assets/d3.min.js        # d3 v7.9 (ISC license) ฝังไว้ในโปรเจกต์
+utils/payload.py        # สร้าง JSON จากตารางที่ประมวลผลแล้ว + ป้ายข้อมูลจริง/สังเคราะห์
+utils/live_fetch.py     # ดึงเรื่องร้องเรียน 1111 สดจาก data.go.th (cache + fallback)
+utils/pipeline.py, mismatch.py, queries.py, data_loader.py, sources.py
+data/                   # raw_real (ข้อมูลจริง), raw (สังเคราะห์), processed (parquet), geo
 ```
+
+หน้าจอ: แผนที่ประเทศไทยตรงกลาง (ซูม/เลื่อนได้เฉพาะแผนที่), KPI/กราฟเส้น/โดนัท/แท่ง/พื้นที่/เรดาร์/scatter/heatmap รอบด้าน, ตัวกรองปี, ปุ่ม "แหล่งข้อมูล", ใต้ทุกกราฟมีแหล่งข้อมูลและป้ายจริง/สังเคราะห์, สีแดงใช้เฉพาะแจ้งเตือนเรื่องร้องเรียน
 
 ## Non-Functional Requirements
 
