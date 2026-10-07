@@ -130,3 +130,9 @@ data/                   # raw_real (ข้อมูลจริง), live_cache 
 
 แจ้งเตือน: **แดง = ร้องเรียน** (แสดงเมื่อเลือกมุมมองร้องเรียน), **เหลือง = เศรษฐกิจ/งบ** (GPP ลดลง ตอนดู GPP ต่อหัว · งบต่อหัวต่ำสุด ตอนดูงบ · Mismatch สูงสุด 5 อันดับ ในแท็บ 3) และ chip สัญญาณเตือนรายจังหวัดในแท็บ 2.
 Mismatch คำนวณจากพจน์ที่มีข้อมูลจริง (งบ vs GPP, งบ×ร้องเรียน ด้าน 4–6) แล้วถ่วงน้ำหนักใหม่ ปีที่ไม่มีงบ = ไม่มีคะแนน
+
+## Deploy (Render / any WSGI host)
+
+The Dash app exposes `server` (Flask). Start command: `gunicorn app:server --bind 0.0.0.0:$PORT --workers 1 --timeout 120`.
+`render.yaml` and `Procfile` are included; on Render choose New -> Blueprint (or Web Service) and point at this repo.
+Data fall back to the committed snapshots in `data/raw_real/` if live fetch is unavailable. Real FY2566 budget only; other years show "ไม่มีข้อมูล".
